@@ -20,7 +20,11 @@ public final class RelsParser {
             return Map.of();
         }
         try {
-            var builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            var factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", true);
+            var builder = factory.newDocumentBuilder();
             builder.setEntityResolver((publicId, systemId) -> new org.xml.sax.InputSource(new java.io.StringReader("")));
             var doc = builder.parse(relsFile.toFile());
             var rels = new HashMap<String, Rel>();

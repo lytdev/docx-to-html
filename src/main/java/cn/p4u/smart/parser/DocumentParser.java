@@ -306,8 +306,16 @@ public final class DocumentParser {
         String tblWidth = null;
         var tblWNodes = tblEl.getElementsByTagNameNS(W, "tblW");
         if (tblWNodes.getLength() > 0) {
-            String w = ((Element) tblWNodes.item(0)).getAttributeNS(W, "w");
-            if (!w.isEmpty()) tblWidth = w;
+            var tblWEl = (Element) tblWNodes.item(0);
+            String wVal = tblWEl.getAttributeNS(W, "w");
+            String wType = tblWEl.getAttributeNS(W, "type");
+            if ("pct".equals(wType) && !wVal.isEmpty()) {
+                tblWidth = (Integer.parseInt(wVal) / 50) + "%";
+            } else if ("dxa".equals(wType) && !wVal.isEmpty()) {
+                tblWidth = (Integer.parseInt(wVal) / 20.0) + "pt";
+            } else if (!wVal.isEmpty()) {
+                tblWidth = wVal;
+            }
         }
 
         String tblBorderWidth = null;
@@ -408,8 +416,16 @@ public final class DocumentParser {
             // cell width
             var tcWNodes = tcPr.getElementsByTagNameNS(W, "tcW");
             if (tcWNodes.getLength() > 0) {
-                width = ((Element) tcWNodes.item(0)).getAttributeNS(W, "w");
-                if (width.isEmpty()) width = null;
+                var tcWEl = (Element) tcWNodes.item(0);
+                String wVal = tcWEl.getAttributeNS(W, "w");
+                String wType = tcWEl.getAttributeNS(W, "type");
+                if ("pct".equals(wType) && !wVal.isEmpty()) {
+                    width = (Integer.parseInt(wVal) / 50) + "%";
+                } else if ("dxa".equals(wType) && !wVal.isEmpty()) {
+                    width = (Integer.parseInt(wVal) / 20.0) + "pt";
+                } else if (!wVal.isEmpty()) {
+                    width = wVal;
+                }
             }
 
             // cell borders

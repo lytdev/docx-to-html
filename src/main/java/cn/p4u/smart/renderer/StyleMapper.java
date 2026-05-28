@@ -88,7 +88,7 @@ public final class StyleMapper {
     public static String tableStyle(TableBlock table) {
         var parts = new ArrayList<String>();
         if (table.width() != null) parts.add("width: " + table.width());
-        if (table.borderWidth() != null) parts.add("border: " + table.borderWidth() + " solid " + (table.borderColor() != null ? "#" + table.borderColor() : "#000"));
+        if (table.borderWidth() != null) parts.add("border: " + eighthsToPt(table.borderWidth()) + " solid " + (table.borderColor() != null ? "#" + table.borderColor() : "#000"));
         parts.add("border-collapse: collapse");
         parts.add("visibility: " + (table.visibility() ? "visible" : "hidden"));
         return String.join("; ", parts);
@@ -98,7 +98,7 @@ public final class StyleMapper {
         var parts = new ArrayList<String>();
         if (cell.width() != null) parts.add("width: " + cell.width());
         if (cell.borderWidth() != null && cell.borderColor() != null) {
-            parts.add("border: " + cell.borderWidth() + " solid #" + cell.borderColor());
+            parts.add("border: " + eighthsToPt(cell.borderWidth()) + " solid #" + cell.borderColor());
         } else {
             parts.add("border: 1px solid #000");
         }
@@ -115,6 +115,15 @@ public final class StyleMapper {
             return (hp / 2) + "pt";
         } catch (NumberFormatException e) {
             return null;
+        }
+    }
+
+    private static String eighthsToPt(String eighths) {
+        try {
+            double val = Integer.parseInt(eighths) / 8.0;
+            return val + "pt";
+        } catch (NumberFormatException e) {
+            return "1pt";
         }
     }
 

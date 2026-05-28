@@ -56,7 +56,12 @@ public final class HtmlRenderer {
     }
 
     private static void renderHyperlink(StringBuilder sb, HyperlinkElement link) {
-        sb.append("<a href=\"").append(escapeAttr(link.url())).append("\"")
+        String url = link.url();
+        if (url == null || url.isEmpty()) {
+            for (var run : link.runs()) renderTextRun(sb, run);
+            return;
+        }
+        sb.append("<a href=\"").append(escapeAttr(url)).append("\"")
           .append(" style=\"color: #0563C1; text-decoration: underline;\"");
         sb.append(">");
         for (var run : link.runs()) {
@@ -70,6 +75,10 @@ public final class HtmlRenderer {
         Path mediaPath = resolveMediaPath(img.mediaPath(), config);
         if (config.imageMode() == ConversionConfig.ImageMode.BASE64) {
             String dataUri = ImageHandler.toBase64DataUri(mediaPath, img.mimeType());
+            if (dataUri.isEmpty()) {
+                sb.append("<span style=\"color: #999; font-style: italic;\">[image not found]</span>");
+                return;
+            }
             sb.append(" src=\"").append(dataUri).append("\"");
         } else {
             String relative = img.mediaPath() != null ? img.mediaPath().replace("media/", "") : "";
@@ -82,6 +91,7 @@ public final class HtmlRenderer {
         if (img.height() > 0) sb.append(" height=\"").append(emusToPx(img.height())).append("\"");
         if (img.wrapMode() == WrapMode.LEFT) sb.append(" style=\"float: left;\"");
         else if (img.wrapMode() == WrapMode.RIGHT) sb.append(" style=\"float: right;\"");
+        else if (img.wrapMode() == WrapMode.TOP_AND_BOTTOM) sb.append(" style=\"display: block; margin: auto;\"");
         sb.append(">");
     }
 
