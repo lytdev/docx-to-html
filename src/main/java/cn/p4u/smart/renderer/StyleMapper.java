@@ -40,7 +40,8 @@ public final class StyleMapper {
                 String pt = halfPointsToPt(font.size());
                 if (pt != null) parts.add("font-size: " + pt);
             }
-            if (font.color() != null && !font.color().isEmpty()) {
+            if (font.color() != null && !font.color().isEmpty()
+                    && !"auto".equalsIgnoreCase(font.color()) && !"none".equalsIgnoreCase(font.color())) {
                 parts.add("color: " + (font.color().startsWith("#") ? "" : "#") + font.color());
             }
         }
@@ -52,11 +53,12 @@ public final class StyleMapper {
         if (run.strike()) decorations.add("line-through");
         if (!decorations.isEmpty()) parts.add("text-decoration: " + String.join(" ", decorations));
 
-        if (run.highlight() != null && !run.highlight().isEmpty()) {
+        if (run.highlight() != null && !run.highlight().isEmpty()
+                && !"auto".equalsIgnoreCase(run.highlight()) && !"none".equalsIgnoreCase(run.highlight())) {
             String color = HIGHLIGHT_COLORS.getOrDefault(run.highlight(), "#" + run.highlight());
             parts.add("background-color: " + color);
         } else if (run.shading() != null && !run.shading().isEmpty()
-                && !"auto".equalsIgnoreCase(run.shading())) {
+                && !"auto".equalsIgnoreCase(run.shading()) && !"none".equalsIgnoreCase(run.shading())) {
             parts.add("background-color: " + (run.shading().startsWith("#") ? "" : "#") + run.shading());
         }
 
