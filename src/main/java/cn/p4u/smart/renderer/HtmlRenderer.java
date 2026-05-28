@@ -14,29 +14,75 @@ public final class HtmlRenderer {
         var sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n<html>\n<head><meta charset=\"UTF-8\"></head>\n<body>\n");
         for (var block : model.content()) {
-            renderBlock(sb, block, config);
+            renderBlock(sb, block, config, model.styles());
         }
         sb.append("</body>\n</html>");
         return sb.toString();
     }
 
-    private static void renderBlock(StringBuilder sb, ContentBlock block, ConversionConfig config) {
+    private static void renderBlock(StringBuilder sb, ContentBlock block, ConversionConfig config, Map<String, StyleDef> styles) {
         if (block instanceof ParagraphBlock para) {
-            renderParagraph(sb, para, config);
+            renderParagraph(sb, para, config, styles);
         } else if (block instanceof TableBlock table) {
-            renderTable(sb, table, config);
+            renderTable(sb, table, config, styles);
         }
     }
 
-    private static void renderParagraph(StringBuilder sb, ParagraphBlock para, ConversionConfig config) {
+    private static void renderParagraph(StringBuilder sb, ParagraphBlock para, ConversionConfig config, Map<String, StyleDef> styles) {
+        String tag = resolveHeadingTag(para.styleId(), styles);
         var styleAttr = StyleMapper.paragraphStyle(para);
-        sb.append("<p");
+        sb.append("<").append(tag);
         if (!styleAttr.isEmpty()) sb.append(" style=\"").append(styleAttr).append("\"");
         sb.append(">");
         for (var el : para.elements()) {
             renderParagraphElement(sb, el, config);
         }
-        sb.append("</p>\n");
+        sb.append("</").append(tag).append(">\n");
+    }
+
+    private static String resolveHeadingTag(String styleId, Map<String, StyleDef> styles) {
+        if (styleId == null) return "p";
+        // Direct match on common IDs: "Heading1", "heading1", "1" etc.
+        int level = headingLevelFromId(styleId);
+        if (level > 0) return "h" + level;
+        // Look up style name
+        StyleDef def = styles.get(styleId);
+        if (def != null && def.name() != null) {
+            level = headingLevelFromName(def.name());
+            if (level > 0) return "h" + level;
+        }
+        return "p";
+    }
+
+    private static int headingLevelFromId(String id) {
+        // Match "Heading1", "heading1", "Heading 1", "heading 1", "标题1", "标题 1"
+        String lower = id.toLowerCase(Locale.ROOT).trim();
+        if (lower.startsWith("heading")) {
+            String rest = lower.substring(7).trim();
+            return parseLevel(rest);
+        }
+        if (lower.startsWith("标题")) {
+            String rest = lower.substring(2).trim();
+            return parseLevel(rest);
+        }
+        return 0;
+    }
+
+    private static int headingLevelFromName(String name) {
+        String lower = name.toLowerCase(Locale.ROOT).trim();
+        if (lower.startsWith("heading")) {
+            String rest = lower.substring(7).trim();
+            return parseLevel(rest);
+        }
+        if (lower.startsWith("标题")) {
+            String rest = lower.substring(2).trim();
+            return parseLevel(rest);
+        }
+        return 0;
+    }
+
+    private static int parseLevel(String s) {
+        try { return Integer.parseInt(s); } catch (NumberFormatException e) { return 0; }
     }
 
     private static void renderParagraphElement(StringBuilder sb, ParagraphElement el, ConversionConfig config) {
@@ -109,7 +155,7 @@ public final class HtmlRenderer {
         sb.append(">");
     }
 
-    private static void renderTable(StringBuilder sb, TableBlock table, ConversionConfig config) {
+    private static void renderTable(StringBuilder sb, TableBlock table, ConversionConfig config, Map<String, StyleDef> styles) {
         var tableStyle = StyleMapper.tableStyle(table);
         sb.append("<table style=\"").append(tableStyle).append("\">\n");
         for (var row : table.rows()) {
@@ -122,7 +168,7 @@ public final class HtmlRenderer {
                 if (cell.rowspan() > 1) sb.append(" rowspan=\"").append(cell.rowspan()).append("\"");
                 sb.append(" style=\"").append(cellStyle).append("\">");
                 for (var para : cell.paragraphs()) {
-                    renderParagraph(sb, para, config);
+                    renderParagraph(sb, para, config, styles);
                 }
                 sb.append("</td>\n");
             }
