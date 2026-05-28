@@ -32,15 +32,17 @@ public final class StyleMapper {
         var parts = new ArrayList<String>();
         var font = run.font();
 
-        if (font.name() != null && !font.name().isEmpty()) {
-            parts.add("font-family: " + font.name());
-        }
-        if (font.size() != null && !font.size().isEmpty()) {
-            String pt = halfPointsToPt(font.size());
-            if (pt != null) parts.add("font-size: " + pt);
-        }
-        if (font.color() != null && !font.color().isEmpty()) {
-            parts.add("color: " + (font.color().startsWith("#") ? "" : "#") + font.color());
+        if (font != null) {
+            if (font.name() != null && !font.name().isEmpty()) {
+                parts.add("font-family: " + font.name());
+            }
+            if (font.size() != null && !font.size().isEmpty()) {
+                String pt = halfPointsToPt(font.size());
+                if (pt != null) parts.add("font-size: " + pt);
+            }
+            if (font.color() != null && !font.color().isEmpty()) {
+                parts.add("color: " + (font.color().startsWith("#") ? "" : "#") + font.color());
+            }
         }
         if (run.bold()) parts.add("font-weight: bold");
         if (run.italic()) parts.add("font-style: italic");
