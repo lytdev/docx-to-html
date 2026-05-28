@@ -88,7 +88,11 @@ public final class StyleMapper {
     public static String tableStyle(TableBlock table) {
         var parts = new ArrayList<String>();
         if (table.width() != null) parts.add("width: " + table.width());
-        if (table.borderWidth() != null) parts.add("border: " + eighthsToPt(table.borderWidth()) + " solid " + (table.borderColor() != null ? "#" + table.borderColor() : "#000"));
+        if (table.borderWidth() != null) {
+            String bc = table.borderColor();
+            if (bc == null || "auto".equalsIgnoreCase(bc)) bc = "000";
+            parts.add("border: " + eighthsToPt(table.borderWidth()) + " solid #" + bc);
+        }
         parts.add("border-collapse: collapse");
         parts.add("visibility: " + (table.visibility() ? "visible" : "hidden"));
         return String.join("; ", parts);
@@ -97,8 +101,10 @@ public final class StyleMapper {
     public static String cellStyle(TableCell cell) {
         var parts = new ArrayList<String>();
         if (cell.width() != null) parts.add("width: " + cell.width());
-        if (cell.borderWidth() != null && cell.borderColor() != null) {
-            parts.add("border: " + eighthsToPt(cell.borderWidth()) + " solid #" + cell.borderColor());
+        if (cell.borderWidth() != null) {
+            String bc = cell.borderColor();
+            if (bc == null || "auto".equalsIgnoreCase(bc)) bc = "000";
+            parts.add("border: " + eighthsToPt(cell.borderWidth()) + " solid #" + bc);
         } else {
             parts.add("border: 1px solid #000");
         }
