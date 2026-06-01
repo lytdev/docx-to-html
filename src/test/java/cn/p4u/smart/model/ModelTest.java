@@ -1,36 +1,42 @@
 package cn.p4u.smart.model;
 
 import org.junit.jupiter.api.Test;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModelTest {
 
     @Test
     void buildMinimalDocument() {
-        var run = new TextRun("Hello", new FontSpec("SimSun", "12pt", "#000000"),
+        TextRun run = new TextRun("Hello", new FontSpec("SimSun", "12pt", "#000000", null, null),
                 true, false, false, false, null, null, false, false, "");
-        var para = new ParagraphBlock("", null, null, List.of(run));
-        var doc = new DocumentModel(java.util.Map.of(), List.of(para));
+        ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(run));
+        DocumentModel doc = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
         assertEquals(1, doc.content().size());
-        assertInstanceOf(ParagraphBlock.class, doc.content().getFirst());
-        var p = (ParagraphBlock) doc.content().getFirst();
-        assertEquals("Hello", ((TextRun) p.elements().getFirst()).text());
+        assertTrue(doc.content().get(0) instanceof ParagraphBlock);
+        ParagraphBlock p = (ParagraphBlock) doc.content().get(0);
+        assertEquals("Hello", ((TextRun) p.elements().get(0)).text());
     }
 
     @Test
     void buildTableDocument() {
-        var run = new TextRun("cell", new FontSpec("SimSun", "10pt", "#000000"),
+        TextRun run = new TextRun("cell", new FontSpec("SimSun", "10pt", "#000000", null, null),
                 false, false, false, false, null, null, false, false, "");
-        var cellPara = new ParagraphBlock("", null, null, List.of(run));
-        var cell = new TableCell(List.of(cellPara), 1, 1, "100px",
-                "1px", "#000", null, true);
-        var row = new TableRow(List.of(cell), "30px");
-        var table = new TableBlock(List.of(row), "200px", "1px", "#000", true);
-        var doc = new DocumentModel(java.util.Map.of(), List.of(table));
+        ParagraphBlock cellPara = new ParagraphBlock("", null, null, null, Arrays.asList(run));
+        TableCell cell = new TableCell(Arrays.asList(cellPara), 1, 1, "100px",
+                new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),
+                new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),
+                null, true);
+        TableRow row = new TableRow(Arrays.asList(cell), "30px");
+        TableBlock table = new TableBlock(Arrays.asList(row), "200px",
+                new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),
+                new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),
+                BorderSpec.NONE, BorderSpec.NONE, true);
+        DocumentModel doc = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(table), null);
 
         assertEquals(1, doc.content().size());
-        assertInstanceOf(TableBlock.class, doc.content().getFirst());
+        assertTrue(doc.content().get(0) instanceof TableBlock);
     }
 }

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,12 +14,12 @@ class DocxConverterTest {
 
     @Test
     void convertsMinimalDocx() throws Exception {
-        try (var builder = new TestDocxBuilder()) {
+        try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels()
                     .addDocument("<w:p><w:r><w:t>Hello</w:t></w:r></w:p>");
             Path docxPath = builder.build();
 
-            var result = DocxConverter.convert(docxPath, ConversionConfig.base64Defaults());
+            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.base64Defaults());
             assertTrue(result.html().contains("Hello"));
             assertTrue(result.html().contains("<!DOCTYPE html>"));
             assertFalse(result.extractedDir().isPresent());
@@ -27,15 +28,15 @@ class DocxConverterTest {
 
     @Test
     void keepsTempDirWhenConfigured() throws Exception {
-        try (var builder = new TestDocxBuilder()) {
+        try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels()
                     .addDocument("<w:p><w:r><w:t>Temp</w:t></w:r></w:p>");
             Path docxPath = builder.build();
 
-            var config = new ConversionConfig(
+            ConversionConfig config = new ConversionConfig(
                     ConversionConfig.ImageMode.BASE64,
-                    Path.of("images"), null, true);
-            var result = DocxConverter.convert(docxPath, config);
+                    Paths.get("images"), null, true);
+            ConversionResult result = DocxConverter.convert(docxPath, config);
             assertTrue(result.html().contains("Temp"));
             assertTrue(result.extractedDir().isPresent());
             assertTrue(Files.exists(result.extractedDir().get()));
@@ -46,6 +47,6 @@ class DocxConverterTest {
     @Test
     void throwsForInvalidInput() {
         assertThrows(DocxConversionException.class,
-                () -> DocxConverter.convert(Path.of("/nonexistent.docx"), ConversionConfig.base64Defaults()));
+                () -> DocxConverter.convert(Paths.get("/nonexistent.docx"), ConversionConfig.base64Defaults()));
     }
 }

@@ -9,53 +9,57 @@ import static org.junit.jupiter.api.Assertions.*;
 class OmmlToLatexConverterTest {
 
     private Element parseOmml(String xml) throws Exception {
-        String wrapped = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <m:oMath xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">"""
-            + xml + """
-            </m:oMath>""";
-        var factory = DocumentBuilderFactory.newInstance();
+        String wrapped = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<m:oMath xmlns:m=\"http://schemas.openxmlformats.org/officeDocument/2006/math\">" +
+            xml + "\n" +
+            "</m:oMath>";
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        var builder = factory.newDocumentBuilder();
-        builder.setEntityResolver((publicId, systemId) -> new org.xml.sax.InputSource(new java.io.StringReader("")));
-        var doc = builder.parse(new ByteArrayInputStream(wrapped.getBytes()));
+        javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
+        builder.setEntityResolver(new org.xml.sax.EntityResolver() {
+            @Override
+            public org.xml.sax.InputSource resolveEntity(String publicId, String systemId) {
+                return new org.xml.sax.InputSource(new java.io.StringReader(""));
+            }
+        });
+        org.w3c.dom.Document doc = builder.parse(new ByteArrayInputStream(wrapped.getBytes()));
         return doc.getDocumentElement();
     }
 
     @Test
     void convertsSimpleRun() throws Exception {
-        var el = parseOmml("<m:r><m:t>x</m:t></m:r>");
+        Element el = parseOmml("<m:r><m:t>x</m:t></m:r>");
         assertEquals("x", OmmlToLatexConverter.convert(el));
     }
 
     @Test
     void convertsFraction() throws Exception {
-        var el = parseOmml("""
-            <m:f>
-              <m:fPr><m:type m:val="bar"/></m:fPr>
-              <m:num><m:r><m:t>a</m:t></m:r></m:num>
-              <m:den><m:r><m:t>b</m:t></m:r></m:den>
-            </m:f>""");
+        Element el = parseOmml(
+            "<m:f>\n" +
+            "  <m:fPr><m:type m:val=\"bar\"/></m:fPr>\n" +
+            "  <m:num><m:r><m:t>a</m:t></m:r></m:num>\n" +
+            "  <m:den><m:r><m:t>b</m:t></m:r></m:den>\n" +
+            "</m:f>");
         assertEquals("\\frac{a}{b}", OmmlToLatexConverter.convert(el));
     }
 
     @Test
     void convertsSuperscript() throws Exception {
-        var el = parseOmml("""
-            <m:sSup>
-              <m:e><m:r><m:t>x</m:t></m:r></m:e>
-              <m:sup><m:r><m:t>2</m:t></m:r></m:sup>
-            </m:sSup>""");
+        Element el = parseOmml(
+            "<m:sSup>\n" +
+            "  <m:e><m:r><m:t>x</m:t></m:r></m:e>\n" +
+            "  <m:sup><m:r><m:t>2</m:t></m:r></m:sup>\n" +
+            "</m:sSup>");
         assertEquals("x^{2}", OmmlToLatexConverter.convert(el));
     }
 
     @Test
     void convertsSubscript() throws Exception {
-        var el = parseOmml("""
-            <m:sSub>
-              <m:e><m:r><m:t>x</m:t></m:r></m:e>
-              <m:sub><m:r><m:t>i</m:t></m:r></m:sub>
-            </m:sSub>""");
+        Element el = parseOmml(
+            "<m:sSub>\n" +
+            "  <m:e><m:r><m:t>x</m:t></m:r></m:e>\n" +
+            "  <m:sub><m:r><m:t>i</m:t></m:r></m:sub>\n" +
+            "</m:sSub>");
         assertEquals("x_{i}", OmmlToLatexConverter.convert(el));
     }
 

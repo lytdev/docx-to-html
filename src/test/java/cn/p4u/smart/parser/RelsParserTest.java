@@ -9,15 +9,14 @@ class RelsParserTest {
 
     @Test
     void parsesRelationships() throws Exception {
-        String xml = """
-            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-              <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>
-              <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="https://example.com" TargetMode="External"/>
-            </Relationships>""";
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
+            "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">\n" +
+            "  <Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/image1.png\"/>\n" +
+            "  <Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink\" Target=\"https://example.com\" TargetMode=\"External\"/>\n" +
+            "</Relationships>";
 
         Path tempFile = Files.createTempFile("rels", ".xml");
-        Files.writeString(tempFile, xml);
+        cn.p4u.smart.util.Jdk8Helpers.writeString(tempFile, xml);
         try {
             Map<String, RelsParser.Rel> rels = RelsParser.parse(tempFile);
             assertEquals(2, rels.size());
