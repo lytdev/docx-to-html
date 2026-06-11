@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Test Commands
 
-**Prerequisite:** JDK 21 must be used to run Maven. The system default Java is JDK 8, so always set `JAVA_HOME`:
+**Prerequisite:** JDK 8 must be used to run Maven. The system default Java is JDK 8, so always set `JAVA_HOME`:
 ```bash
 export JAVA_HOME=/c/DevRepo/jdk/jdk-1.8
 ```
@@ -16,7 +16,7 @@ export JAVA_HOME=/c/DevRepo/jdk/jdk-1.8
 
 ## JDK 8 Compatibility
 
-Source and target are set to `1.8` in pom.xml. The codebase must compile as Java 8 — no streams, lambdas, records, sealed types, `var`, text blocks, or JDK 9+ API calls. `Jdk8Helpers` (`cn.p4u.smart.util`) backports `OutputStream.nullOutputStream()`, `InputStream.transferTo()`, `Files.writeString()`, and `Files.readString()`. Use these instead of the JDK 11+ equivalents.
+Source and target are set to `1.8` in pom.xml. The codebase must compile as Java 8 — no streams, lambdas, records, sealed types, `var`, text blocks, or JDK 8+ API calls. `Jdk8Helpers` (`cn.p4u.smart.util`) backports `OutputStream.nullOutputStream()`, `InputStream.transferTo()`, `Files.writeString()`, and `Files.readString()`. Use these instead of the JDK 1.8+ equivalents.
 
 ## Architecture
 
@@ -131,3 +131,18 @@ One test dependency:
 ## Testing
 
 Tests use `TestDocxBuilder` (in `src/test/java/cn/p4u/smart/util/`) to programmatically construct valid .docx ZIP files. It implements `AutoCloseable` and cleans up the `.docx` temp file on close. The extracted directory is cleaned up by `DocxExtractor.cleanup()` in test `finally` blocks. Supports `addContentTypes()`, `addRels()`, `addDocument()`, `addDocumentRels()`, `addStyles()`, `addTheme()`, and `addMedia()`.
+
+## Packaging (Windows exe)
+
+The `native` profile uses jpackage (bundled with JDK 17+) to create a self-contained Windows application with an embedded JRE.
+
+**Prerequisite:** JDK 17+ with jpackage. Set `JAVA_HOME` accordingly:
+```bash
+export JAVA_HOME=/c/DevRepo/jdk/dragonwell-21.0.6.0.6+7-GA
+```
+
+```bash
+mvn -Pnative package
+```
+
+Output: `target/dist/docx2html/` directory containing `docx2html.exe` and bundled runtime.
