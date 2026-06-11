@@ -31,9 +31,16 @@ class GuiRunnerTest {
     }
 
     @Test
-    void deriveOutputPath_preservesParentDirectory() {
+    void deriveOutputPath_handlesRelativePathNoParent() {
         Path input = Paths.get("report.docx");
         Path output = GuiRunner.deriveOutputPath(input);
         assertEquals(Paths.get("report.html"), output);
+    }
+
+    @Test
+    void deriveOutputPath_nonDocxExtension_appendsHtml() {
+        Path input = Paths.get("C:\\Docs\\notes.txt");
+        Path output = GuiRunner.deriveOutputPath(input);
+        assertEquals(Paths.get("C:\\Docs\\notes.txt.html"), output);
     }
 }

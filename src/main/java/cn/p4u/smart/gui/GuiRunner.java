@@ -24,14 +24,12 @@ public class GuiRunner {
      */
     public static Path deriveOutputPath(Path docxPath) {
         String fileName = docxPath.getFileName().toString();
-        String baseName;
-        int dotIndex = fileName.toLowerCase().lastIndexOf(".docx");
-        if (dotIndex > 0) {
-            baseName = fileName.substring(0, dotIndex);
+        String htmlName;
+        if (fileName.toLowerCase().endsWith(".docx")) {
+            htmlName = fileName.substring(0, fileName.length() - 5) + ".html";
         } else {
-            baseName = fileName;
+            htmlName = fileName + ".html";
         }
-        String htmlName = baseName + ".html";
         Path parent = docxPath.getParent();
         return parent != null ? parent.resolve(htmlName) : Paths.get(htmlName);
     }
