@@ -17,6 +17,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <picocli.version>4.7.6</picocli.version>
+    <jpackage.path>${env.JAVA_HOME}/bin/jpackage</jpackage.path>
   </properties>
 
   <dependencies>
@@ -109,6 +110,7 @@
                 </goals>
                 <configuration>
                   <target>
+                    <delete dir="${project.build.directory}/dist/docx2html" quiet="true"/>
                     <mkdir dir="${project.build.directory}/jpackage-input"/>
                     <copy file="${project.build.directory}/${project.build.finalName}-all.jar" todir="${project.build.directory}/jpackage-input" overwrite="true"/>
                   </target>
@@ -128,7 +130,7 @@
                   <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <executable>jpackage</executable>
+                  <executable>${jpackage.path}</executable>
                   <arguments>
                     <argument>--input</argument>
                     <argument>${project.build.directory}/jpackage-input</argument>
