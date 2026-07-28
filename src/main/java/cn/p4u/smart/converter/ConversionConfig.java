@@ -52,7 +52,8 @@ public final class ConversionConfig {
 
     @Override
     public String toString() {
-        return "ConversionConfig[imageUriResolver=" + imageUriResolver.getClass().getSimpleName()
+        return "ConversionConfig[imageUriResolver=" + (imageUriResolver != null
+                    ? imageUriResolver.getClass().getSimpleName() : "null")
                 + ", extractedDir=" + extractedDir
                 + ", keepTemp=" + keepTemp
                 + ", latexRenderUrl=" + latexRenderUrl + "]";
