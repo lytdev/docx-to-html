@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  *
  * <p>主要使用场景：{@link HtmlRenderer} 在渲染流程中遇到 WMF/EMF 图像时，
  * 调用本类的 {@link #convertToPng} 方法将其转为 PNG 字节流，
- * 再由 {@link ImageHandler} 写入输出目录并生成对应的 HTML img 标签。</p>
+ * 再由 {@link HtmlRenderer} 通过 {@link ImageUriResolver} 生成对应的 HTML img 标签。</p>
  *
  * <p>该类为无状态的工具类，所有方法均为 static，策略检测结果通过 volatile 缓存，
  * 避免重复执行外部进程探测。</p>

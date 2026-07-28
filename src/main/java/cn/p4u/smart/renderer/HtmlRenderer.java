@@ -554,10 +554,14 @@ public final class HtmlRenderer {
     private static void renderMath(StringBuilder sb, MathElement math, ConversionConfig config) {
         String latex = math.latex();
         if (math.imagePath() != null) {
-            // 有 VML 备用图片，直接嵌入为 base64 img
+            // 有 VML 备用图片，通过 ImageUriResolver 获取 URI 后嵌入
             Path imgPath = resolveMediaPath(math.imagePath(), config);
-            String src = ImageHandler.toBase64DataUri(imgPath, math.mimeType());
-            sb.append("<img src=\"").append(src).append("\" style=\"vertical-align: middle;\"");
+            try {
+                ImageUriResolver.ResolveResult result = config.imageUriResolver().resolve(imgPath, math.mimeType());
+                sb.append("<img src=\"").append(escapeAttr(result.uri())).append("\" style=\"vertical-align: middle;\"");
+            } catch (IOException e) {
+                sb.append("<img src=\"\" style=\"vertical-align: middle; color: #999; font-style: italic;\" alt=\"[math image resolve failed]\"");
+            }
             if (latex != null && !latex.isEmpty()) {
                 sb.append(" data-latex=\"").append(escapeAttr(latex)).append("\"");
             }
