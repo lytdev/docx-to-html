@@ -1,9 +1,11 @@
 package cn.p4u.smart.cli;
 
 import cn.p4u.smart.converter.ConversionConfig;
-import cn.p4u.smart.converter.ConversionConfig.ImageMode;
 import cn.p4u.smart.converter.ConversionResult;
 import cn.p4u.smart.converter.DocxConverter;
+import cn.p4u.smart.renderer.Image2Base64Resolver;
+import cn.p4u.smart.renderer.Image2OssResolver;
+import cn.p4u.smart.renderer.ImageUriResolver;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -11,7 +13,6 @@ import picocli.CommandLine.Parameters;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 /**
@@ -34,15 +35,24 @@ public class CliRunner implements Callable<Integer> {
     @Option(names = {"-o", "--output"}, description = "Output HTML file (default: stdout)")
     private Path outputFile;
 
-    /** 图片嵌入方式：base64（内嵌）或 link（外部链接），默认 base64 */
-    @Option(names = "--image-mode", description = "Image embedding: base64 or link (default: base64)",
+    @Option(names = "--image-resolver", description = "Image resolver: base64 (default) or oss",
             defaultValue = "base64")
-    private String imageMode;
+    private String imageResolver;
 
-    /** 链接模式下图片保存的目录路径，默认 "images" */
-    @Option(names = "--image-dir", description = "Directory for linked images (default: images)",
-            defaultValue = "images")
-    private String imageDir;
+    @Option(names = "--oss-endpoint", description = "OSS endpoint (required when --image-resolver=oss)")
+    private String ossEndpoint;
+
+    @Option(names = "--oss-bucket", description = "OSS bucket name (required when --image-resolver=oss)")
+    private String ossBucket;
+
+    @Option(names = "--oss-access-key", description = "OSS access key (required when --image-resolver=oss)")
+    private String ossAccessKey;
+
+    @Option(names = "--oss-secret-key", description = "OSS secret key (required when --image-resolver=oss)")
+    private String ossSecretKey;
+
+    @Option(names = "--oss-base-path", description = "OSS object key prefix")
+    private String ossBasePath;
 
     /** 是否保留解压的临时目录用于调试，默认不保留 */
     @Option(names = "--keep-temp", description = "Keep extracted temp directory for debugging")
@@ -63,10 +73,20 @@ public class CliRunner implements Callable<Integer> {
             return 1;
         }
 
-        // 解析图片嵌入模式：link 为外部链接模式，其余均默认 base64 内嵌模式
-        ImageMode mode = "link".equalsIgnoreCase(imageMode) ? ImageMode.LINK : ImageMode.BASE64;
-        // 构建转换配置，extractedDir 设为 null（由转换器内部自动创建）
-        ConversionConfig config = new ConversionConfig(mode, Paths.get(imageDir), null, keepTemp);
+        ImageUriResolver resolver;
+        if ("oss".equalsIgnoreCase(imageResolver)) {
+            if (ossEndpoint == null || ossBucket == null || ossAccessKey == null || ossSecretKey == null) {
+                System.err.println("Error: --oss-endpoint, --oss-bucket, --oss-access-key, and --oss-secret-key are required when --image-resolver=oss");
+                return 1;
+            }
+            Image2OssResolver.OssConfig ossConfig = new Image2OssResolver.OssConfig(
+                    ossEndpoint, ossBucket, ossAccessKey, ossSecretKey,
+                    ossBasePath != null ? ossBasePath : "");
+            resolver = new Image2OssResolver(ossConfig);
+        } else {
+            resolver = new Image2Base64Resolver();
+        }
+        ConversionConfig config = new ConversionConfig(resolver, null, keepTemp);
 
         // 执行三阶段转换管线：解压 → 解析 → 渲染
         ConversionResult result = DocxConverter.convert(inputFile, config);
