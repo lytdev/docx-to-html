@@ -160,7 +160,7 @@ public class GuiRunner extends JFrame {
         SwingWorker<ConversionResult, Object> worker = new SwingWorker<ConversionResult, Object>() {
             @Override
             protected ConversionResult doInBackground() throws Exception {
-                return DocxConverter.convert(selectedFile, ConversionConfig.base64Defaults());
+                return DocxConverter.convert(selectedFile, ConversionConfig.defaults());
             }
 
             @Override
