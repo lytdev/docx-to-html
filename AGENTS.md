@@ -4,9 +4,9 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Build & Test Commands
 
-**Prerequisite:** JDK 8 must be used to run Maven. The system default Java is JDK 8, so always set `JAVA_HOME`:
+**Prerequisite:** JDK 21 must be used to run Maven. The system default Java is JDK 21, so always set `JAVA_HOME`:
 ```bash
-export JAVA_HOME=/c/DevRepo/jdk/jdk-1.8
+export JAVA_HOME=/c/DevRepo/jdk/dragonwell-21.0.6.0.6+7-GA
 ```
 
 - **Build:** `mvn compile`
@@ -14,9 +14,9 @@ export JAVA_HOME=/c/DevRepo/jdk/jdk-1.8
 - **Single test class:** `mvn test -Dtest=DocumentParserTest`
 - **Run CLI:** `mvn exec:java -Dexec.mainClass="cn.p4u.smart.cli.CliRunner" -Dexec.args="input.docx -o output.html"`
 
-## JDK 8 Compatibility
+## JDK 21
 
-Source and target are set to `1.8` in pom.xml. The codebase must compile as Java 8 — no streams, lambdas, records, sealed types, `var`, text blocks, or JDK 8+ API calls. `Jdk8Helpers` (`cn.p4u.smart.util`) backports `OutputStream.nullOutputStream()`, `InputStream.transferTo()`, `Files.writeString()`, and `Files.readString()`. Use these instead of the JDK 1.8+ equivalents.
+Source and target are set to `21` in pom.xml. Modern Java features — streams, lambdas, records, sealed types, `var`, text blocks, pattern matching — are all available. Previously, `Jdk8Helpers` backported JDK 9/11 APIs for JDK 8 compatibility; it has been removed. Use the standard `Files.writeString()`, `Files.readString()`, `OutputStream.nullOutputStream()`, and `InputStream.transferTo()` directly.
 
 ## Architecture
 
@@ -134,9 +134,9 @@ Tests use `TestDocxBuilder` (in `src/test/java/cn/p4u/smart/util/`) to programma
 
 ## Packaging (Windows exe)
 
-The `native` profile uses jpackage (bundled with JDK 17+) to create a self-contained Windows application with an embedded JRE.
+The `native` profile uses jpackage (bundled with JDK 21) to create a self-contained Windows application with an embedded JRE.
 
-**Prerequisite:** JDK 17+ with jpackage. Set `JAVA_HOME` accordingly:
+**Prerequisite:** JDK 21 with jpackage. Use the same JAVA_HOME as for building:
 ```bash
 export JAVA_HOME=/c/DevRepo/jdk/dragonwell-21.0.6.0.6+7-GA
 ```
