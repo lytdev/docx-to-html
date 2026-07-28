@@ -29,7 +29,7 @@ class ModelTest {
                 new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),
                 new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),
                 null, true);
-        TableRow row = new TableRow(Arrays.asList(cell), "30px");
+        TableRow row = new TableRow(Arrays.asList(cell), "30", null);
         TableBlock table = new TableBlock(Arrays.asList(row), "200px",
                 new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),
                 new BorderSpec("8", "#000"), new BorderSpec("8", "#000"),

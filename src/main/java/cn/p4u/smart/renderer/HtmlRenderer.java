@@ -114,8 +114,18 @@ public final class HtmlRenderer {
     private static void renderListItem(StringBuilder sb, ParagraphBlock para,
                                         ConversionConfig config, Map<String, StyleDef> styles) {
         String styleAttr = StyleMapper.paragraphStyle(para);
+        String paraFontSize = extractParagraphFontSize(para);
         sb.append("<li");
-        if (!styleAttr.isEmpty()) sb.append(" style=\"").append(styleAttr).append("\"");
+        boolean hasStyle = !styleAttr.isEmpty() || paraFontSize != null;
+        if (hasStyle) {
+            sb.append(" style=\"");
+            if (!styleAttr.isEmpty()) sb.append(styleAttr);
+            if (paraFontSize != null) {
+                if (!styleAttr.isEmpty()) sb.append("; ");
+                sb.append("font-size: ").append(paraFontSize);
+            }
+            sb.append("\"");
+        }
         sb.append(">");
         for (ParagraphElement el : para.elements()) {
             renderParagraphElement(sb, el, config);
@@ -154,8 +164,20 @@ public final class HtmlRenderer {
         // 解析标题级别：如果段落属于标题样式则返回 h1-h6，否则返回 p
         String tag = resolveHeadingTag(para, styles);
         String styleAttr = StyleMapper.paragraphStyle(para);
+        // 提取段落中第一个 TextRun 的字号作为段落级 font-size 基线，
+        // 确保无显式字号的 MathML 公式等内联元素能够继承正确的字号
+        String paraFontSize = extractParagraphFontSize(para);
         sb.append("<").append(tag);
-        if (!styleAttr.isEmpty()) sb.append(" style=\"").append(styleAttr).append("\"");
+        boolean hasStyle = !styleAttr.isEmpty() || paraFontSize != null;
+        if (hasStyle) {
+            sb.append(" style=\"");
+            if (!styleAttr.isEmpty()) sb.append(styleAttr);
+            if (paraFontSize != null) {
+                if (!styleAttr.isEmpty()) sb.append("; ");
+                sb.append("font-size: ").append(paraFontSize);
+            }
+            sb.append("\"");
+        }
         sb.append(">");
         for (ParagraphElement el : para.elements()) {
             renderParagraphElement(sb, el, config);
@@ -281,6 +303,34 @@ public final class HtmlRenderer {
     }
 
     /**
+     * 从段落元素中提取第一个 {@link TextRun} 的字号（pt 值），用作段落级 font-size 基线。
+     *
+     * <p>遍历段落的所有元素，找到第一个 TextRun 并提取其 {@link FontSpec} 中已解析的字号。
+     * 字号已由 DocumentParser 从半磅值转换为 pt 字符串。找不到 TextRun 时返回 null。
+     *
+     * @param para 段落块
+     * @return 字号字符串（如 "10.5pt"），无 TextRun 时返回 null
+     */
+    private static String extractParagraphFontSize(ParagraphBlock para) {
+        for (ParagraphElement el : para.elements()) {
+            if (el instanceof TextRun) {
+                FontSpec font = ((TextRun) el).font();
+                if (font != null && font.size() != null && !font.size().isEmpty()) {
+                    // font.size() 是 OOXML 半磅值字符串（如 "21" = 10.5pt），
+                    // 需除以 2 转为 pt
+                    try {
+                        int hp = Integer.parseInt(font.size());
+                        return (hp / 2) + "pt";
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * 根据段落元素的实际类型分发到对应的渲染方法。
      *
      * @param sb     用于拼接 HTML 的 StringBuilder
@@ -304,14 +354,93 @@ public final class HtmlRenderer {
     /**
      * 渲染文本运行（TextRun）为带有内联样式的 &lt;span&gt; 元素。
      *
+     * <p>当拉丁字体与东亚字体不同时，按字符类型分拆为多个 span：
+     * <ul>
+     *   <li>CJK 字符（汉字、中文标点）→ 东亚字体优先</li>
+     *   <li>非 CJK 字符（英文、数字、ASCII 标点）→ 拉丁字体优先</li>
+     * </ul>
+     * 这与 Word 的按 Unicode 范围选字行为一致。
+     *
      * @param sb  用于拼接 HTML 的 StringBuilder
      * @param run 文本运行，包含文本内容和字体/颜色/粗斜等样式
      */
     private static void renderTextRun(StringBuilder sb, TextRun run) {
-        String css = StyleMapper.runStyle(run);
-        sb.append("<span");
-        if (!css.isEmpty()) sb.append(" style=\"").append(css).append("\"");
-        sb.append(">").append(escapeHtml(run.text())).append("</span>");
+        FontSpec font = run.font();
+        // 仅当拉丁字体与东亚字体均存在且不同时才需要分拆
+        boolean needSplit = font != null
+                && font.name() != null && !font.name().isEmpty()
+                && font.eastAsia() != null && !font.eastAsia().isEmpty()
+                && !font.eastAsia().equals(font.name());
+
+        if (!needSplit) {
+            // 无需分拆：单字体或相同字体，直接渲染
+            String css = StyleMapper.runStyle(run);
+            sb.append("<span");
+            if (!css.isEmpty()) sb.append(" style=\"").append(css).append("\"");
+            sb.append(">").append(escapeHtml(run.text())).append("</span>");
+            return;
+        }
+
+        // 需要分拆：按字符类型切分为连续的同类型片段
+        String text = run.text();
+        int len = text.length();
+        int start = 0;
+        while (start < len) {
+            int cp = text.codePointAt(start);
+            int charLen = Character.charCount(cp);
+            boolean isCjk = isCjkChar(cp);
+
+            // 扫描连续的同类字符
+            int end = start + charLen;
+            while (end < len) {
+                int nextCp = text.codePointAt(end);
+                if (isCjkChar(nextCp) != isCjk) break;
+                end += Character.charCount(nextCp);
+            }
+
+            // 为当前片段生成 CSS：CJK 片段东亚字体优先，非 CJK 片段拉丁字体优先
+            String css = StyleMapper.runStyle(run, isCjk);
+            sb.append("<span");
+            if (!css.isEmpty()) sb.append(" style=\"").append(css).append("\"");
+            sb.append(">").append(escapeHtml(text.substring(start, end))).append("</span>");
+
+            start = end;
+        }
+    }
+
+    /**
+     * 判断 Unicode 码点是否属于 CJK 字符范围（汉字、中文标点、全角符号等）。
+     *
+     * <p>覆盖的 Unicode 区块：
+     * <ul>
+     *   <li>U+4E00-9FFF  CJK 统一表意文字（常用汉字）</li>
+     *   <li>U+3400-4DBF  CJK 统一表意文字扩展 A</li>
+     *   <li>U+20000-2EBEF  CJK 统一表意文字扩展 B-F（需代理对）</li>
+     *   <li>U+3000-303F  CJK 符号和标点（、。〃々「」等）</li>
+     *   <li>U+FF00-FFEF  半角全角形式（，．：；？！等全角标点）</li>
+     *   <li>U+FE30-FE4F  CJK 兼容形式</li>
+     *   <li>U+2E80-2EFF  CJK 部首补充</li>
+     *   <li>U+2F00-2FDF  康熙部首</li>
+     *   <li>U+3200-33FF  带圈/括弧 CJK 字母和月份、CJK 兼容</li>
+     *   <li>U+F900-FAFF  CJK 兼容表意文字</li>
+     * </ul>
+     *
+     * @param codePoint Unicode 码点
+     * @return true 表示属于 CJK 字符范围
+     */
+    private static boolean isCjkChar(int codePoint) {
+        return (codePoint >= 0x4E00 && codePoint <= 0x9FFF)     // CJK Unified Ideographs (常用汉字)
+            || (codePoint >= 0x3400 && codePoint <= 0x4DBF)     // CJK Unified Ideographs Extension A
+            || (codePoint >= 0x20000 && codePoint <= 0x2EBEF)   // CJK Ext B-F (生僻字)
+            || (codePoint >= 0x3000 && codePoint <= 0x303F)     // CJK Symbols and Punctuation (、。〃「」)
+            || (codePoint >= 0xFF00 && codePoint <= 0xFFEF)     // Halfwidth/Fullwidth Forms (，．：；？！)
+            || (codePoint >= 0xFE30 && codePoint <= 0xFE4F)     // CJK Compatibility Forms (vertical variants)
+            || (codePoint >= 0x2E80 && codePoint <= 0x2EFF)     // CJK Radicals Supplement
+            || (codePoint >= 0x2F00 && codePoint <= 0x2FDF)     // Kangxi Radicals
+            || (codePoint >= 0x3200 && codePoint <= 0x33FF)     // Enclosed CJK / CJK Compatibility
+            || (codePoint >= 0xF900 && codePoint <= 0xFAFF)     // CJK Compatibility Ideographs
+            || (codePoint >= 0x2000 && codePoint <= 0x206F)     // General Punctuation (" " — … 等中文常用标点)
+            || (codePoint == 0x00B7);                           // MIDDLE DOT (·) 中文间隔号
     }
 
     /**
@@ -456,7 +585,15 @@ public final class HtmlRenderer {
         String tableStyle = StyleMapper.tableStyle(table);
         sb.append("<table style=\"").append(tableStyle).append("\">\n");
         for (TableRow row : table.rows()) {
-            String rowStyle = row.height() != null ? " style=\"height: " + row.height() + "\"" : "";
+            String rowStyle = "";
+            if (row.height() != null) {
+                // atLeast → min-height（最小高度，内容可撑高），exact → height（精确高度）
+                if ("atLeast".equals(row.hRule())) {
+                    rowStyle = " style=\"min-height: " + row.height() + "pt\"";
+                } else {
+                    rowStyle = " style=\"height: " + row.height() + "pt\"";
+                }
+            }
             sb.append("<tr").append(rowStyle).append(">\n");
             for (TableCell cell : row.cells()) {
                 String cellStyle = StyleMapper.cellStyle(cell);

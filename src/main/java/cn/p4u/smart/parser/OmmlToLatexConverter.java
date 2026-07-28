@@ -23,6 +23,8 @@ public final class OmmlToLatexConverter {
 
     /** OMML 命名空间 URI，用于通过命名空间限定查找子元素 */
     private static final String M = "http://schemas.openxmlformats.org/officeDocument/2006/math";
+    /** WordprocessingML 命名空间 URI，用于查找 w:rPr 中的 w:i、w:b */
+    private static final String W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
     /** 私有构造函数，防止实例化——本类仅提供静态方法 */
     private OmmlToLatexConverter() {}
@@ -126,18 +128,92 @@ public final class OmmlToLatexConverter {
      * <p>OMML 的 {@code <m:r>} 结构与 Word 的 {@code <w:r>} 类似，
      * 实际文本存放在子元素 {@code <m:t>} 中。</p>
      *
+     * <p>检查 {@code <m:rPr>} 中的格式属性：
+     * <ul>
+     *   <li>{@code <m:nor/>} — 正常/直立文本，对应 LaTeX 的 {@code \mathrm{}}</li>
+     *   <li>{@code <m:sty m:val="b"/>} — 粗体，对应 LaTeX 的 {@code \mathbf{}}</li>
+     *   <li>{@code <m:sty m:val="bi"/>} — 粗斜体，对应 LaTeX 的 {@code \mathbf{}}（LaTeX 中 \mathbf 带斜体）</li>
+     * </ul>
+     *
      * @param rEl {@code <m:r>} 元素
-     * @return 转义后的 LaTeX 文本；若无 {@code <m:t>} 子元素则返回空 StringBuilder
+     * @return 带格式的 LaTeX 文本；若无 {@code <m:t>} 子元素则返回空 StringBuilder
      */
     private static StringBuilder convertRun(Element rEl) {
+        // 检查 m:rPr 属性：<m:nor/> 表示使用普通文本格式（非数学斜体）
+        boolean isNor = false;     // <m:nor/> → 使用 w:rPr 的文字格式
+        boolean isStyBold = false; // <m:sty m:val="b"/"bi"/> → 粗体
+        // 检查 w:rPr 属性：当 m:nor 存在时决定实际字体样式
+        boolean wItalic = false;   // <w:i/> → 斜体
+        boolean wBold = false;     // <w:b/> → 粗体
+
         NodeList children = rEl.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            if (!(child instanceof Element)) continue;
+            Element el = (Element) child;
+            if ("rPr".equals(el.getLocalName())) {
+                NodeList rPrChildren = el.getChildNodes();
+                for (int j = 0; j < rPrChildren.getLength(); j++) {
+                    Node rprChild = rPrChildren.item(j);
+                    if (!(rprChild instanceof Element)) continue;
+                    Element rprEl = (Element) rprChild;
+                    String ln = rprEl.getLocalName();
+                    if ("nor".equals(ln)) {
+                        isNor = true;
+                    } else if ("sty".equals(ln)) {
+                        String styVal = rprEl.getAttributeNS(M, "val");
+                        if ("b".equals(styVal) || "bi".equals(styVal) || "bs".equals(styVal)) {
+                            isStyBold = true;
+                        }
+                    }
+                }
+            } else if (W.equals(el.getNamespaceURI()) && "rPr".equals(el.getLocalName())) {
+                // 解析 w:rPr 中的 w:i、w:b（注意 attr 用 W namespace）
+                NodeList wrPrChildren = el.getChildNodes();
+                for (int j = 0; j < wrPrChildren.getLength(); j++) {
+                    Node wrChild = wrPrChildren.item(j);
+                    if (!(wrChild instanceof Element)) continue;
+                    Element wrEl = (Element) wrChild;
+                    String ln = wrEl.getLocalName();
+                    if ("i".equals(ln)) {
+                        String val = wrEl.getAttributeNS(W, "val");
+                        // val 为空、true、1 表示斜体；0、false 表示非斜体
+                        wItalic = val.isEmpty() || !("0".equals(val) || "false".equals(val));
+                    } else if ("b".equals(ln)) {
+                        String val = wrEl.getAttributeNS(W, "val");
+                        wBold = val.isEmpty() || !("0".equals(val) || "false".equals(val));
+                    }
+                }
+            }
+        }
+
+        // 提取 m:t 文本
         for (int i = 0; i < children.getLength(); i++) {
             Node child = children.item(i);
             if (child instanceof Element) {
                 Element el = (Element) child;
                 if ("t".equals(el.getLocalName())) {
-                    // 对文本内容进行 LaTeX 特殊字符转义，防止公式渲染出错
-                    return new StringBuilder(latexEscape(el.getTextContent()));
+                    String text = latexEscape(el.getTextContent());
+                    // 判断最终样式
+                    boolean effectiveItalic;
+                    boolean effectiveBold;
+                    if (isNor) {
+                        // m:nor → 使用文字格式（w:rPr 的 i/b）
+                        effectiveItalic = wItalic;
+                        effectiveBold = wBold || isStyBold;
+                    } else {
+                        // 无 m:nor → 默认数学斜体
+                        effectiveItalic = true;
+                        effectiveBold = wBold || isStyBold;
+                    }
+                    if (effectiveBold && effectiveItalic) {
+                        return new StringBuilder("\\mathbf{").append(text).append("}");
+                    } else if (effectiveBold) {
+                        return new StringBuilder("\\mathbf{").append(text).append("}");
+                    } else if (!effectiveItalic) {
+                        return new StringBuilder("\\mathrm{").append(text).append("}");
+                    }
+                    return new StringBuilder(text);
                 }
             }
         }
@@ -457,8 +533,18 @@ public final class OmmlToLatexConverter {
      * @return 第一个匹配的子元素；若未找到则返回 null
      */
     private static Element findChild(Element parent, String localName) {
-        NodeList nodes = parent.getElementsByTagNameNS(M, localName);
-        return nodes.getLength() > 0 ? (Element) nodes.item(0) : null;
+        // 仅搜索直接子元素，避免嵌套同名元素误匹配
+        NodeList children = parent.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            if (child instanceof Element) {
+                Element el = (Element) child;
+                if (M.equals(el.getNamespaceURI()) && localName.equals(el.getLocalName())) {
+                    return el;
+                }
+            }
+        }
+        return null;
     }
 
     /**

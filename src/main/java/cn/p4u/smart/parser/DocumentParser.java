@@ -56,8 +56,12 @@ public final class DocumentParser {
     private final Map<String, RelsParser.Rel> rels;
     /** 样式定义 map，key 为 styleId，已完成继承合并和主题解析 */
     private final Map<String, StyleDef> styles;
-    /** 文档默认字符属性的原始嵌套 map，来自 w:docDefaults/w:rPrDefault/w:rFonts；可为 null */
+    /** 文档默认字符属性的嵌套 map，来自 w:docDefaults/w:rPrDefault/w:rFonts；主题引用已解析为具体值；可为 null */
     private final Map<String, Map<String, String>> docDefaultRunAttrs;
+    /** 默认段落样式的 styleId（标记 w:default="1" 且 w:type="paragraph"）；可为 null */
+    private final String defaultParaStyleId;
+    /** 默认字符样式的 styleId（标记 w:default="1" 且 w:type="character"）；可为 null */
+    private final String defaultCharStyleId;
     /** 主题定义，包含颜色方案和字体方案 */
     private final ThemeDef theme;
     /** 编号格式 map，key 为 numId，value 为格式名（如 "decimal"、"bullet"） */
@@ -82,14 +86,20 @@ public final class DocumentParser {
         this.rels = RelsParser.parse(extractedDir.resolve("word/_rels/document.xml.rels"));
         StylesParser.StylesResult stylesResult = StylesParser.parse(extractedDir.resolve("word/styles.xml"));
         Map<String, StyleDef> rawStyles = stylesResult.styles();
-        this.docDefaultRunAttrs = stylesResult.docDefaultRunAttrs();
+        Map<String, Map<String, String>> rawDocDefaults = stylesResult.docDefaultRunAttrs();
+        this.defaultParaStyleId = stylesResult.defaultParaStyleId();
+        this.defaultCharStyleId = stylesResult.defaultCharStyleId();
         this.theme = ThemeParser.parse(extractedDir.resolve("word/theme/theme1.xml"));
         this.numberingFormats = NumberingParser.parse(extractedDir.resolve("word/numbering.xml"));
         // 先合并样式继承链，使每个样式包含其祖先的属性；
         // docDefaults 作为终极后备注入到继承链底部
-        Map<String, StyleDef> resolved = resolveStyleInheritance(rawStyles);
+        Map<String, StyleDef> resolved = resolveStyleInheritance(rawStyles, rawDocDefaults);
         // 再将主题引用替换为具体值，确保 renderer 拿到的是完全解析的样式
         this.styles = resolveThemeInStyles(resolved);
+        // docDefaultRunAttrs 可能包含主题引用（如 asciiTheme="minorHAnsi"），
+        // 需要在主题解析完成后同样替换为具体值，否则 resolveInheritedFontSpec
+        // 的 docDefaults 后备阶段无法找到实际字体名
+        this.docDefaultRunAttrs = resolveThemeInDocDefaults(rawDocDefaults);
     }
 
     /**
@@ -166,10 +176,12 @@ public final class DocumentParser {
      * 当 docDefaultRunAttrs 不为空时，会创建一个合成的 docDefaults 样式并注入到继承链底部，
      * 使所有根样式（无 basedOn 或 basedOn 指向不存在的样式）都能默认继承文档默认属性。
      *
-     * @param raw 解析 styles.xml 得到的原始样式 map
+     * @param raw               解析 styles.xml 得到的原始样式 map
+     * @param docDefaultRunAttrs 文档默认字符属性的原始嵌套 map，可为 null
      * @return 合并后的不可变样式 map，每个样式已包含完整的继承属性（含 docDefaults 后备）
      */
-    private Map<String, StyleDef> resolveStyleInheritance(Map<String, StyleDef> raw) {
+    private Map<String, StyleDef> resolveStyleInheritance(Map<String, StyleDef> raw,
+                                                          Map<String, Map<String, String>> docDefaultRunAttrs) {
         // 如果存在 docDefaults，构建合成样式并注入到 raw map 的底部
         Map<String, StyleDef> effectiveRaw = raw;
         String docDefaultId = null;
@@ -365,6 +377,61 @@ public final class DocumentParser {
     }
 
     /**
+     * 对文档默认属性（docDefaultRunAttrs）执行主题引用解析。
+     * <p>
+     * 与 {@link #resolveThemeInStyles(Map)} 逻辑一致，但针对 docDefaults 的原始属性 map。
+     * Word 的默认 docDefaults 通常使用主题引用（如 w:asciiTheme="minorHAnsi"），
+     * 这些引用必须在字体继承链的终极后备阶段被解析为具体字体名，
+     * 否则 {@link #resolveInheritedFontSpec} 的 docDefaults 后备将无法找到实际字体值。
+     *
+     * @param rawAttrs 解析自 w:docDefaults 的原始字符属性嵌套 map，可为 null
+     * @return 主题引用已替换为具体值的不可变 map，若输入为 null 则返回 null
+     */
+    private Map<String, Map<String, String>> resolveThemeInDocDefaults(Map<String, Map<String, String>> rawAttrs) {
+        if (rawAttrs == null) return null;
+        HashMap<String, Map<String, String>> result = new HashMap<String, Map<String, String>>(rawAttrs);
+
+        // 解析 w:rFonts 中的主题字体引用
+        Map<String, String> rFontsAttrs = result.get("rFonts");
+        if (rFontsAttrs != null) {
+            HashMap<String, String> updated = new HashMap<String, String>(rFontsAttrs);
+            resolveFontAttr(updated, "asciiTheme", "ascii");
+            resolveFontAttr(updated, "hAnsiTheme", "hAnsi");
+            resolveFontAttr(updated, "eastAsiaTheme", "eastAsia");
+            resolveFontAttr(updated, "csTheme", "cs");
+            result.put("rFonts", Collections.unmodifiableMap(updated));
+        }
+
+        // 解析 w:color 中的主题颜色引用
+        Map<String, String> colorAttrs = result.get("color");
+        if (colorAttrs != null) {
+            HashMap<String, String> updated = new HashMap<String, String>(colorAttrs);
+            String themeColor = updated.get("themeColor");
+            if (themeColor != null && !updated.containsKey("val")) {
+                String resolved = resolveThemeColor(themeColor,
+                        updated.get("themeTint"), updated.get("themeShade"));
+                if (resolved != null) updated.put("val", resolved);
+            }
+            result.put("color", Collections.unmodifiableMap(updated));
+        }
+
+        // 解析 w:shd 中的主题填充引用
+        Map<String, String> shdAttrs = result.get("shd");
+        if (shdAttrs != null) {
+            HashMap<String, String> updated = new HashMap<String, String>(shdAttrs);
+            String themeFill = updated.get("themeFill");
+            if (themeFill != null && !updated.containsKey("fill")) {
+                String resolved = resolveThemeColor(themeFill,
+                        updated.get("themeFillTint"), updated.get("themeFillShade"));
+                if (resolved != null) updated.put("fill", resolved);
+            }
+            result.put("shd", Collections.unmodifiableMap(updated));
+        }
+
+        return Collections.unmodifiableMap(result);
+    }
+
+    /**
      * 解析单个字体属性的主题引用。
      * <p>
      * 如果属性 map 中存在 themeAttr（如 "asciiTheme"）但没有对应的 targetAttr（如 "ascii"），
@@ -533,31 +600,39 @@ public final class DocumentParser {
      * 当 inline 的 w:rFonts 属性不完整时（如缺少 eastAsia 字体槽），
      * 需要沿样式链向上查找，用祖先样式中对应字体槽的值补全缺失字段。
      * 这确保了即使在样式定义中跨层级声明字体，最终也能得到完整的字体信息。
+     * <p>
+     * 按 OOXML 规范的字体系属性继承优先级：
+     * <ol>
+     *   <li>inline 的 w:rFonts 属性（最高优先级）</li>
+     *   <li>Run 样式（w:rStyle）的 basedOn 继承链</li>
+     *   <li>段落样式（w:pStyle）的 w:rPr basedOn 继承链</li>
+     *   <li>docDefaults 文档默认值（终极后备）</li>
+     * </ol>
      *
-     * @param styleId       当前 Run 引用的样式 ID，可为 null
+     * @param runStyleId    当前 Run 引用的字符样式 ID，可为 null
+     * @param paraStyleId   当前段落引用的段落样式 ID，可为 null
      * @param inlineRFonts  inline 的 w:rFonts 属性 map，可为 null
      * @return 包含所有可用字体槽的 FontSpec，若所有槽均为空则返回 null
      */
-    private FontSpec resolveInheritedFontSpec(String styleId, Map<String, String> inlineRFonts) {
+    private FontSpec resolveInheritedFontSpec(String runStyleId, String paraStyleId,
+                                              Map<String, String> inlineRFonts) {
         // 优先使用 inline 属性
         String ascii = inlineRFonts != null ? inlineRFonts.get("ascii") : null;
         String eastAsia = inlineRFonts != null ? inlineRFonts.get("eastAsia") : null;
         String cs = inlineRFonts != null ? inlineRFonts.get("cs") : null;
 
-        // 若 inline 属性存在缺失字段，沿 basedOn 链向上补全
-        if (styleId != null && styles.containsKey(styleId)) {
+        // Phase 1: 若 inline 属性存在缺失字段，沿 Run 样式(w:rStyle)的 basedOn 链向上补全
+        if (runStyleId != null && styles.containsKey(runStyleId)) {
             HashSet<String> visited = new HashSet<String>();
-            String current = styleId;
+            String current = runStyleId;
             while (current != null && styles.containsKey(current) && !visited.contains(current)) {
                 visited.add(current);
                 StyleDef def = styles.get(current);
                 Map<String, Map<String, String>> rawRun = def.rawRunAttrs();
                 Map<String, String> rFontsAttrs = rawRun.get("rFonts");
                 if (rFontsAttrs != null) {
-                    // 用祖先样式的字体槽补全当前为空的槽位
                     if (isBlank(ascii)) {
                         String v = rFontsAttrs.get("ascii");
-                        // OOXML 中 w:ascii 和 w:hAnsi 均为拉丁字体槽，hAnsi 是 ascii 的备选
                         if (v == null || v.isEmpty()) v = rFontsAttrs.get("hAnsi");
                         if (v != null && !v.isEmpty()) ascii = v;
                     }
@@ -567,7 +642,31 @@ public final class DocumentParser {
                 current = def.basedOn();
             }
         }
-        // 基于样式链遍历完毕后仍有空槽，使用 docDefaults 作为终极后备
+
+        // Phase 2: 若 Run 样式链仍未补全，沿段落样式(w:pStyle)的 w:rPr basedOn 链向上补全
+        // OOXML 规范：段落样式的 Run 属性部分优先于 docDefaults
+        if (paraStyleId != null && styles.containsKey(paraStyleId)) {
+            HashSet<String> visited = new HashSet<String>();
+            String current = paraStyleId;
+            while (current != null && styles.containsKey(current) && !visited.contains(current)) {
+                visited.add(current);
+                StyleDef def = styles.get(current);
+                Map<String, Map<String, String>> rawRun = def.rawRunAttrs();
+                Map<String, String> rFontsAttrs = rawRun.get("rFonts");
+                if (rFontsAttrs != null) {
+                    if (isBlank(ascii)) {
+                        String v = rFontsAttrs.get("ascii");
+                        if (v == null || v.isEmpty()) v = rFontsAttrs.get("hAnsi");
+                        if (v != null && !v.isEmpty()) ascii = v;
+                    }
+                    if (isBlank(eastAsia)) { String v = rFontsAttrs.get("eastAsia"); if (v != null && !v.isEmpty()) eastAsia = v; }
+                    if (isBlank(cs)) { String v = rFontsAttrs.get("cs"); if (v != null && !v.isEmpty()) cs = v; }
+                }
+                current = def.basedOn();
+            }
+        }
+
+        // Phase 3: docDefaults 作为终极后备（主题引用已在构造时解析为具体值）
         if (docDefaultRunAttrs != null) {
             Map<String, String> ddFonts = docDefaultRunAttrs.get("rFonts");
             if (ddFonts != null) {
@@ -583,6 +682,68 @@ public final class DocumentParser {
         // 所有槽位均为空则无需创建 FontSpec
         if (isBlank(ascii) && isBlank(eastAsia) && isBlank(cs)) return null;
         return new FontSpec(isBlank(ascii) ? null : ascii, null, null, isBlank(eastAsia) ? null : eastAsia, isBlank(cs) ? null : cs);
+    }
+
+    /**
+     * 解析布尔型 Run 属性（w:b、w:i、w:u、w:strike），沿样式继承链回退。
+     * <p>
+     * 当 inline w:rPr 未设置某属性时，按 OOXML 优先级回退：
+     * <ol>
+     *   <li>Run 样式（w:rStyle）的 basedOn 继承链（runProps 已合并）</li>
+     *   <li>段落样式（w:pStyle）的 w:rPr basedOn 继承链（runProps 已合并）</li>
+     * </ol>
+     * 属性的值为 "0"/"false"/"off"/"none"/"nil" 时表示关闭，其余值表示启用。
+     *
+     * @param runStyleId  当前 Run 引用的字符样式 ID，可为 null
+     * @param paraStyleId 当前段落引用的段落样式 ID，可为 null
+     * @param propName    属性名称（如 "b"、"i"、"u"、"strike"）
+     * @return 该属性是否启用
+     */
+    private boolean resolveBoolPropFromStyles(String runStyleId, String paraStyleId, String propName) {
+        // Phase 1: Run 样式（w:rStyle）的 runProps（已在 mergeWithParents 中沿 basedOn 合并）
+        if (runStyleId != null && styles.containsKey(runStyleId)) {
+            String val = styles.get(runStyleId).runProps().get(propName);
+            if (val != null) {
+                return !"0".equals(val) && !"false".equals(val)
+                        && !"off".equals(val) && !"none".equals(val) && !"nil".equals(val);
+            }
+        }
+        // Phase 2: 段落样式（w:pStyle）的 runProps（已在 mergeWithParents 中沿 basedOn 合并）
+        if (paraStyleId != null && styles.containsKey(paraStyleId)) {
+            String val = styles.get(paraStyleId).runProps().get(propName);
+            if (val != null) {
+                return !"0".equals(val) && !"false".equals(val)
+                        && !"off".equals(val) && !"none".equals(val) && !"nil".equals(val);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 沿样式继承链解析 w:sz 字号属性（半磅值字符串）。
+     * <p>
+     * 当 inline w:rPr 未设置 w:sz 时，按 OOXML 优先级回退：
+     * <ol>
+     *   <li>Run 样式（w:rStyle）的 runProps（已在 mergeWithParents 中沿 basedOn 合并，含 docDefaults）</li>
+     *   <li>段落样式（w:pStyle）的 runProps（已在 mergeWithParents 中沿 basedOn 合并，含 docDefaults）</li>
+     * </ol>
+     *
+     * @param runStyleId  当前 Run 引用的字符样式 ID，可为 null
+     * @param paraStyleId 当前段落引用的段落样式 ID，可为 null
+     * @return 半磅值字符串（如 "21"），未找到时返回 null
+     */
+    private String resolveSzFromStyles(String runStyleId, String paraStyleId) {
+        // Phase 1: Run 样式（w:rStyle）的 runProps（已沿 basedOn 合并，含 docDefaults）
+        if (runStyleId != null && styles.containsKey(runStyleId)) {
+            String val = styles.get(runStyleId).runProps().get("sz");
+            if (val != null && !val.isEmpty()) return val;
+        }
+        // Phase 2: 段落样式（w:pStyle）的 runProps（已沿 basedOn 合并，含 docDefaults）
+        if (paraStyleId != null && styles.containsKey(paraStyleId)) {
+            String val = styles.get(paraStyleId).runProps().get("sz");
+            if (val != null && !val.isEmpty()) return val;
+        }
+        return null;
     }
 
     // ---- 段落解析 ----
@@ -606,16 +767,13 @@ public final class DocumentParser {
         Integer ilvl = null;
         ArrayList<ParagraphElement> elements = new ArrayList<ParagraphElement>();
 
+        // 第一遍：提取段落属性（需要先知道 paraStyleId 才能向下传递字体继承）
         NodeList children = pEl.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node child = children.item(i);
             if (!(child instanceof Element)) continue;
             Element el = (Element) child;
-            String ns = el.getNamespaceURI();
-            String localName = el.getLocalName();
-
-            if (W.equals(ns) && "pPr".equals(localName)) {
-                // 提取段落属性
+            if (W.equals(el.getNamespaceURI()) && "pPr".equals(el.getLocalName())) {
                 styleId = getAttrVal(el, W, "pStyle", "val");
                 alignment = getAttrVal(el, W, "jc", "val");
                 outlineLvl = getOutlineLvl(el);
@@ -634,12 +792,50 @@ public final class DocumentParser {
                 if (indNodes.getLength() > 0) {
                     indentation = parseIndentation((Element) indNodes.item(0));
                 }
+                break; // pPr 最多一个，找到即可退出
+            }
+        }
+
+        // OOXML 规范：段落未指定 w:pStyle 时默认使用标记 w:default="1" 的段落样式
+        if (styleId == null) {
+            styleId = defaultParaStyleId;
+        }
+
+        // 从样式继承链补全段落属性：inline w:pPr 缺失时回退到 style 的 paragraphProps
+        if (styleId != null && styles.containsKey(styleId)) {
+            StyleDef styleDef = styles.get(styleId);
+            Map<String, String> pProps = styleDef.paragraphProps();
+            if (alignment == null) {
+                String jc = pProps.get("jc");
+                if (jc != null && !jc.isEmpty()) alignment = jc;
+            }
+            if (outlineLvl == null) {
+                outlineLvl = styleDef.outlineLvl();
+            }
+            if (indentation == null) {
+                Map<String, String> indAttrs = styleDef.rawParaAttrs().get("ind");
+                if (indAttrs != null) {
+                    indentation = parseIndentationFromAttrs(indAttrs);
+                }
+            }
+        }
+
+        // 第二遍：解析内联元素，传递 paraStyleId 用于字体继承
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            if (!(child instanceof Element)) continue;
+            Element el = (Element) child;
+            String ns = el.getNamespaceURI();
+            String localName = el.getLocalName();
+
+            if (W.equals(ns) && "pPr".equals(localName)) {
+                // 已在第一遍处理
             } else if (W.equals(ns) && "r".equals(localName)) {
                 // 文本 Run，可能包含内嵌图形需拆分处理
-                extractRunContent(el, elements);
+                extractRunContent(el, elements, styleId);
             } else if (W.equals(ns) && "hyperlink".equals(localName)) {
                 // 超链接
-                elements.add(parseHyperlink(el));
+                elements.add(parseHyperlink(el, styleId));
             } else if (M.equals(ns) && ("oMath".equals(localName) || "oMathPara".equals(localName))) {
                 // OMML 数学公式（段落级直接子元素）
                 // oMathPara 可能包含多个 oMath 子公式，需分别解析
@@ -671,7 +867,7 @@ public final class DocumentParser {
      * @param rEl      w:r 元素
      * @param elements 用于收集解析结果的列表
      */
-    private void extractRunContent(Element rEl, List<ParagraphElement> elements) {
+    private void extractRunContent(Element rEl, List<ParagraphElement> elements, String paraStyleId) {
         // 检测 Run 中是否包含图形或数学公式相关子元素
         boolean hasDrawing = hasChildLocalName(rEl, W, "drawing");
         boolean hasPict = hasChildLocalName(rEl, W, "pict");
@@ -680,7 +876,7 @@ public final class DocumentParser {
         boolean hasMath = hasChildLocalName(rEl, M, "oMath") || hasChildLocalName(rEl, M, "oMathPara");
         if (!hasDrawing && !hasPict && !hasObject && !hasAC && !hasMath) {
             // 纯文本 Run，直接解析
-            elements.add(parseRun(rEl));
+            elements.add(parseRun(rEl, paraStyleId));
             return;
         }
         // 混合内容 Run：逐个子元素分派处理，保持元素在段落中的原始顺序
@@ -694,21 +890,21 @@ public final class DocumentParser {
             String rln = rce.getLocalName();
             if (W.equals(rns) && "drawing".equals(rln)) {
                 // 遇到图形子元素前，先将累积的文本输出为 TextRun（保持顺序）
-                flushTextParts(textParts, rEl, elements);
+                flushTextParts(textParts, rEl, elements, paraStyleId);
                 if (!tryAddDrawingOrShape(rce, elements)) { /* ignored */ }
             } else if (W.equals(rns) && "pict".equals(rln)) {
-                flushTextParts(textParts, rEl, elements);
+                flushTextParts(textParts, rEl, elements, paraStyleId);
                 extractPict(rce, elements);
             } else if (W.equals(rns) && "object".equals(rln)) {
-                flushTextParts(textParts, rEl, elements);
+                flushTextParts(textParts, rEl, elements, paraStyleId);
                 ImageElement img = parseObject(rce);
                 if (img != null) elements.add(img);
             } else if (MC.equals(rns) && "AlternateContent".equals(rln)) {
-                flushTextParts(textParts, rEl, elements);
+                flushTextParts(textParts, rEl, elements, paraStyleId);
                 extractAlternateContent(rce, elements);
             } else if (M.equals(rns) && ("oMath".equals(rln) || "oMathPara".equals(rln))) {
                 // 遇到内联公式前，先将累积的文本输出，确保文本在公式前面
-                flushTextParts(textParts, rEl, elements);
+                flushTextParts(textParts, rEl, elements, paraStyleId);
                 parseMathElements(rce, elements);
             } else if (W.equals(rns) && "t".equals(rln)) {
                 // 收集文本内容（延迟输出，直到遇到非文本元素或循环结束）
@@ -724,7 +920,7 @@ public final class DocumentParser {
                 textParts.append(tNodes.item(0).getTextContent());
             }
         }
-        flushTextParts(textParts, rEl, elements);
+        flushTextParts(textParts, rEl, elements, paraStyleId);
     }
 
     /**
@@ -735,14 +931,15 @@ public final class DocumentParser {
      * 段落元素的顺序与原文档一致。
      * 如果文本为空则不做任何操作。
      *
-     * @param textParts 累积的文本片段
-     * @param rEl       w:r 元素（用于提取格式属性）
-     * @param elements  目标元素列表
+     * @param textParts    累积的文本片段
+     * @param rEl          w:r 元素（用于提取格式属性）
+     * @param elements     目标元素列表
+     * @param paraStyleId  段落样式 ID，用于字体继承，可为 null
      */
     private void flushTextParts(StringBuilder textParts, Element rEl,
-                                 List<ParagraphElement> elements) {
+                                 List<ParagraphElement> elements, String paraStyleId) {
         if (textParts.length() == 0) return;
-        elements.add(parseRunWithText(rEl, textParts.toString()));
+        elements.add(parseRunWithText(rEl, textParts.toString(), paraStyleId));
         textParts.setLength(0); // 清空累积的文本缓冲区
     }
 
@@ -776,10 +973,11 @@ public final class DocumentParser {
      * 用于混合内容 Run 中文本与图形拆分后的场景。
      *
      * @param rEl  w:r 元素
-     * @param text 由调用方提供的文本内容
+     * @param text         由调用方提供的文本内容
+     * @param paraStyleId  段落样式 ID（w:pStyle），用于段落级字体继承，可为 null
      * @return 解析后的 TextRun 对象
      */
-    private TextRun parseRunWithText(Element rEl, String text) {
+    private TextRun parseRunWithText(Element rEl, String text, String paraStyleId) {
         FontSpec font = null;
         boolean bold = false, italic = false, underline = false, strike = false;
         String highlight = null, shading = null;
@@ -820,11 +1018,14 @@ public final class DocumentParser {
                     if (themeRef != null) cs = resolveThemeFont(themeRef);
                 }
             }
-            // 解析字号（半磅值，需除以 2 得到 pt）
+            // 解析字号（半磅值，需除以 2 得到 pt）；inline 缺失时沿样式继承链回退
             NodeList szNodes = rPr.getElementsByTagNameNS(W, "sz");
             if (szNodes.getLength() > 0) {
                 fontSize = ((Element) szNodes.item(0)).getAttributeNS(W, "val");
                 if (fontSize.isEmpty()) fontSize = null;
+            }
+            if (fontSize == null) {
+                fontSize = resolveSzFromStyles(runStyleId, paraStyleId);
             }
             // 解析字体颜色，优先显式值，缺失时从主题颜色引用解析
             NodeList colorNodes = rPr.getElementsByTagNameNS(W, "color");
@@ -844,7 +1045,7 @@ public final class DocumentParser {
 
             // 若部分字体槽仍为空，沿样式继承链补全
             if (fontName == null || eastAsia == null || cs == null) {
-                FontSpec styleFont = resolveInheritedFontSpec(runStyleId, null);
+                FontSpec styleFont = resolveInheritedFontSpec(runStyleId, paraStyleId, null);
                 if (styleFont != null) {
                     if (fontName == null) fontName = styleFont.name();
                     if (eastAsia == null) eastAsia = styleFont.eastAsia();
@@ -860,10 +1061,11 @@ public final class DocumentParser {
             }
 
             font = new FontSpec(fontName, fontSize, fontColor, eastAsia, cs);
-            bold = hasElement(rPr, W, "b");
-            italic = hasElement(rPr, W, "i");
-            underline = rPr.getElementsByTagNameNS(W, "u").getLength() > 0;
-            strike = hasElement(rPr, W, "strike");
+            // 布尔格式属性：inline rPr 有该元素时用 inline 值，否则沿样式链回退
+            bold = hasElement(rPr, W, "b") ? isBoolPropEnabled(rPr, W, "b") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "b");
+            italic = hasElement(rPr, W, "i") ? isBoolPropEnabled(rPr, W, "i") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "i");
+            underline = hasElement(rPr, W, "u") ? isBoolPropEnabled(rPr, W, "u") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "u");
+            strike = hasElement(rPr, W, "strike") ? isBoolPropEnabled(rPr, W, "strike") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "strike");
             // 文本高亮颜色
             highlight = getAttrVal(rPr, W, "highlight", "val");
             // 字符底纹/背景颜色
@@ -890,8 +1092,21 @@ public final class DocumentParser {
             }
         } else {
             // 无 rPr 元素，仍尝试从样式继承链获取字体默认值
-            FontSpec styleFont = resolveInheritedFontSpec(runStyleId, null);
-            if (styleFont != null) font = styleFont;
+            FontSpec styleFont = resolveInheritedFontSpec(runStyleId, paraStyleId, null);
+            String styleSz = resolveSzFromStyles(runStyleId, paraStyleId);
+            if (styleFont != null || styleSz != null) {
+                font = new FontSpec(
+                    styleFont != null ? styleFont.name() : null,
+                    styleSz,
+                    styleFont != null ? styleFont.color() : null,
+                    styleFont != null ? styleFont.eastAsia() : null,
+                    styleFont != null ? styleFont.cs() : null);
+            }
+            // 布尔格式属性也沿样式链回退
+            bold = resolveBoolPropFromStyles(runStyleId, paraStyleId, "b");
+            italic = resolveBoolPropFromStyles(runStyleId, paraStyleId, "i");
+            underline = resolveBoolPropFromStyles(runStyleId, paraStyleId, "u");
+            strike = resolveBoolPropFromStyles(runStyleId, paraStyleId, "strike");
         }
 
         return new TextRun(text, font, bold, italic, underline, strike,
@@ -1138,6 +1353,23 @@ public final class DocumentParser {
         return new Indentation(left, right, firstLine);
     }
 
+    /**
+     * 从属性 map 解析缩进信息（用于从样式的 rawParaAttrs 回退）。
+     *
+     * @param attrs w:ind 元素的属性 map（key: left/right/firstLine）
+     * @return 缩进对象，若所有属性均为空则返回 null
+     */
+    private Indentation parseIndentationFromAttrs(Map<String, String> attrs) {
+        String left = attrs.get("left");
+        if (left != null && left.isEmpty()) left = null;
+        String right = attrs.get("right");
+        if (right != null && right.isEmpty()) right = null;
+        String firstLine = attrs.get("firstLine");
+        if (firstLine != null && firstLine.isEmpty()) firstLine = null;
+        if (left == null && right == null && firstLine == null) return null;
+        return new Indentation(left, right, firstLine);
+    }
+
     // ---- 文本 Run 解析 ----
 
     /**
@@ -1146,10 +1378,11 @@ public final class DocumentParser {
      * 从 w:rPr 子元素中提取字符格式，包括字体、字号、颜色、加粗、斜体、
      * 下划线、删除线、高亮、底纹和上下标等。字体属性缺失时沿样式继承链补全。
      *
-     * @param rEl w:r 元素
+     * @param rEl          w:r 元素
+     * @param paraStyleId  段落样式 ID（w:pStyle），用于段落级字体继承，可为 null
      * @return 解析后的 TextRun 对象
      */
-    private TextRun parseRun(Element rEl) {
+    private TextRun parseRun(Element rEl, String paraStyleId) {
         String text = "";
         FontSpec font = null;
         boolean bold = false;
@@ -1197,11 +1430,14 @@ public final class DocumentParser {
                     if (themeRef != null) cs = resolveThemeFont(themeRef);
                 }
             }
-            // 解析字号（val 为半磅值）
+            // 解析字号（val 为半磅值）；inline 缺失时沿样式继承链回退
             NodeList szNodes = rPr.getElementsByTagNameNS(W, "sz");
             if (szNodes.getLength() > 0) {
                 fontSize = ((Element) szNodes.item(0)).getAttributeNS(W, "val");
                 if (fontSize.isEmpty()) fontSize = null;
+            }
+            if (fontSize == null) {
+                fontSize = resolveSzFromStyles(runStyleId, paraStyleId);
             }
             // 解析字符颜色，优先显式值，缺失时从主题引用解析
             NodeList colorNodes = rPr.getElementsByTagNameNS(W, "color");
@@ -1220,7 +1456,7 @@ public final class DocumentParser {
 
             // 部分字体槽仍为空时，沿样式继承链补全默认值
             if (fontName == null || eastAsia == null || cs == null) {
-                FontSpec styleFont = resolveInheritedFontSpec(runStyleId, null);
+                FontSpec styleFont = resolveInheritedFontSpec(runStyleId, paraStyleId, null);
                 if (styleFont != null) {
                     if (fontName == null) fontName = styleFont.name();
                     if (eastAsia == null) eastAsia = styleFont.eastAsia();
@@ -1237,15 +1473,11 @@ public final class DocumentParser {
 
             font = new FontSpec(fontName, fontSize, fontColor, eastAsia, cs);
 
-            // 解析布尔格式属性
-            bold = hasElement(rPr, W, "b");
-            italic = hasElement(rPr, W, "i");
-
-            // 下划线（存在 w:u 元素即为有下划线，不区分线型）
-            NodeList uNodes = rPr.getElementsByTagNameNS(W, "u");
-            underline = uNodes.getLength() > 0;
-
-            strike = hasElement(rPr, W, "strike");
+            // 布尔格式属性：inline rPr 有该元素时用 inline 值，否则沿样式链回退
+            bold = hasElement(rPr, W, "b") ? isBoolPropEnabled(rPr, W, "b") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "b");
+            italic = hasElement(rPr, W, "i") ? isBoolPropEnabled(rPr, W, "i") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "i");
+            underline = hasElement(rPr, W, "u") ? isBoolPropEnabled(rPr, W, "u") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "u");
+            strike = hasElement(rPr, W, "strike") ? isBoolPropEnabled(rPr, W, "strike") : resolveBoolPropFromStyles(runStyleId, paraStyleId, "strike");
 
             // 文本高亮颜色
             highlight = getAttrVal(rPr, W, "highlight", "val");
@@ -1273,10 +1505,21 @@ public final class DocumentParser {
             }
         } else {
             // 仅当无 rPr 时，仍尝试从样式继承链获取字体默认值
-            FontSpec styleFont = resolveInheritedFontSpec(runStyleId, null);
-            if (styleFont != null) {
-                font = styleFont;
+            FontSpec styleFont = resolveInheritedFontSpec(runStyleId, paraStyleId, null);
+            String styleSz = resolveSzFromStyles(runStyleId, paraStyleId);
+            if (styleFont != null || styleSz != null) {
+                font = new FontSpec(
+                    styleFont != null ? styleFont.name() : null,
+                    styleSz,
+                    styleFont != null ? styleFont.color() : null,
+                    styleFont != null ? styleFont.eastAsia() : null,
+                    styleFont != null ? styleFont.cs() : null);
             }
+            // 布尔格式属性也沿样式链回退
+            bold = resolveBoolPropFromStyles(runStyleId, paraStyleId, "b");
+            italic = resolveBoolPropFromStyles(runStyleId, paraStyleId, "i");
+            underline = resolveBoolPropFromStyles(runStyleId, paraStyleId, "u");
+            strike = resolveBoolPropFromStyles(runStyleId, paraStyleId, "strike");
         }
 
         // 提取文本内容
@@ -1297,10 +1540,11 @@ public final class DocumentParser {
      * 超链接的目标地址通过 r:id 属性引用关系文件中的 URL。
      * 超链接文本由内部的 w:r 元素组成，逐个解析为 TextRun。
      *
-     * @param hlEl w:hyperlink 元素
+     * @param hlEl        w:hyperlink 元素
+     * @param paraStyleId 段落样式 ID，用于字体继承，可为 null
      * @return 解析后的超链接元素
      */
-    private HyperlinkElement parseHyperlink(Element hlEl) {
+    private HyperlinkElement parseHyperlink(Element hlEl, String paraStyleId) {
         // 通过 r:id 关系 ID 查找目标 URL
         String rId = hlEl.getAttributeNS(R, "id");
         String url = null;
@@ -1315,7 +1559,7 @@ public final class DocumentParser {
             if (child instanceof Element) {
                 Element el = (Element) child;
                 if (W.equals(el.getNamespaceURI()) && "r".equals(el.getLocalName())) {
-                    runs.add(parseRun(el));
+                    runs.add(parseRun(el, paraStyleId));
                 }
             }
         }
@@ -1811,9 +2055,10 @@ public final class DocumentParser {
                 tblWidth = (Integer.parseInt(wVal) / 50) + "%";
             } else if ("dxa".equals(wType) && !wVal.isEmpty()) {
                 tblWidth = (Integer.parseInt(wVal) / 20.0) + "pt";
-            } else if (!wVal.isEmpty()) {
+            } else if (!"auto".equals(wType) && !wVal.isEmpty()) {
                 tblWidth = wVal;
             }
+            // type="auto" 表示宽度由内容自动决定，不设置 CSS width（等同于 width: auto）
         }
 
         // 逐侧解析外边框与内边框
@@ -1950,15 +2195,30 @@ public final class DocumentParser {
 
         // 第三遍：逐行构建 TableCell，使用网格坐标判断位置和 rowspan
         for (int rowIdx = 0; rowIdx < totalRows; rowIdx++) {
-            // 解析行高
+            // 解析行高（w:trHeight：val 为 twips，需转换为 pt；hRule 控制高度行为）
             String height = null;
+            String hRule = null;
             NodeList trPrNodes = trElements.get(rowIdx).getElementsByTagNameNS(W, "trPr");
             if (trPrNodes.getLength() > 0) {
                 Element trPr = (Element) trPrNodes.item(0);
                 NodeList trHeightNodes = trPr.getElementsByTagNameNS(W, "trHeight");
                 if (trHeightNodes.getLength() > 0) {
-                    height = ((Element) trHeightNodes.item(0)).getAttributeNS(W, "val");
-                    if (height.isEmpty()) height = null;
+                    Element trHeightEl = (Element) trHeightNodes.item(0);
+                    String val = trHeightEl.getAttributeNS(W, "val");
+                    if (!val.isEmpty()) {
+                        try {
+                            // twips → pt：除以 20
+                            double pt = Long.parseLong(val) / 20.0;
+                            // 去除末尾无意义的 .0
+                            if (pt == Math.floor(pt) && !Double.isInfinite(pt)) {
+                                height = String.valueOf((long) pt);
+                            } else {
+                                height = String.valueOf(pt);
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    hRule = trHeightEl.getAttributeNS(W, "hRule");
+                    if (hRule.isEmpty()) hRule = null;
                 }
             }
 
@@ -2009,7 +2269,7 @@ public final class DocumentParser {
                         topBorder, leftBorder, bottomBorder, rightBorder,
                         insideHBorder, insideVBorder));
             }
-            rows.add(new TableRow(Collections.unmodifiableList(cells), height));
+            rows.add(new TableRow(Collections.unmodifiableList(cells), height, hRule));
         }
 
         // 表格外边框不再需要根据单元格进行修正：外边框已下放到各边缘单元格，
@@ -2046,7 +2306,9 @@ public final class DocumentParser {
     /**
      * 解析 w:tr 元素，提取行高和单元格数据。
      * <p>
-     * 行高从 w:trPr/w:trHeight 的 val 属性获取（twips 单位）。
+     * 行高从 w:trPr/w:trHeight 的 val 属性获取（twips 单位），
+     * 在构造 TableRow 前转换为 pt（除以 20）。
+     * w:hRule 属性决定 CSS 呈现方式：atLeast → min-height；exact → height。
      *
     /**
      * 解析 w:tc 元素，提取单元格属性和段落内容。
@@ -2114,9 +2376,10 @@ public final class DocumentParser {
                     width = (Integer.parseInt(wVal) / 50) + "%";
                 } else if ("dxa".equals(wType) && !wVal.isEmpty()) {
                     width = (Integer.parseInt(wVal) / 20.0) + "pt";
-                } else if (!wVal.isEmpty()) {
+                } else if (!"auto".equals(wType) && !wVal.isEmpty()) {
                     width = wVal;
                 }
+                // type="auto" 表示宽度由内容自动决定，不设置 CSS width
             }
 
             // 单元格逐侧边框覆盖 — tcBorders 可对任意侧进行覆盖
@@ -2415,6 +2678,29 @@ public final class DocumentParser {
      */
     private static boolean hasElement(Element parent, String ns, String childLocalName) {
         return parent.getElementsByTagNameNS(ns, childLocalName).getLength() > 0;
+    }
+
+    /**
+     * 检查布尔型 OOXML 属性（如 w:b、w:i、w:strike）是否启用。
+     * <p>
+     * OOXML 规范：布尔型属性元素存在且无 w:val 属性时表示启用；
+     * w:val="0" 或 w:val="false" 表示显式关闭；
+     * w:val="1" 或 w:val="true" 表示显式启用。
+     *
+     * @param parent         父元素
+     * @param ns             目标元素的命名空间 URI
+     * @param childLocalName 目标元素的本地名称
+     * @return 该属性是否启用
+     */
+    private static boolean isBoolPropEnabled(Element parent, String ns, String childLocalName) {
+        NodeList nodes = parent.getElementsByTagNameNS(ns, childLocalName);
+        if (nodes.getLength() == 0) return false;
+        String val = ((Element) nodes.item(0)).getAttributeNS(ns, "val");
+        // 无 val 属性 → 元素存在即启用；val="0"/"false" → 显式关闭
+        if (val.isEmpty()) return true;
+        String lv = val.toLowerCase();
+        return !(lv.equals("0") || lv.equals("false") || lv.equals("off")
+                || lv.equals("none") || lv.equals("nil"));
     }
 
     /**

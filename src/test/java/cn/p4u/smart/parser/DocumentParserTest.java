@@ -103,6 +103,145 @@ class DocumentParserTest {
     }
 
     @Test
+    void parsesRunWithBoldExplicitlyOff() throws Exception {
+        // <w:b w:val="0"/> 表示显式关闭加粗，不应识别为加粗
+        DocumentModel model = parseBody(
+            "<w:p><w:r><w:rPr>\n" +
+            "  <w:rFonts w:ascii=\"Arial\"/>\n" +
+            "  <w:b w:val=\"0\"/>\n" +
+            "</w:rPr><w:t>Not bold</w:t></w:r></w:p>");
+
+        TextRun run = (TextRun) ((ParagraphBlock) model.content().get(0)).elements().get(0);
+        assertFalse(run.bold(), "b w:val=\"0\" should not be bold");
+    }
+
+    @Test
+    void parsesRunWithBoldExplicitlyOffByFalse() throws Exception {
+        // <w:b w:val="false"/> 也应表示关闭加粗
+        DocumentModel model = parseBody(
+            "<w:p><w:r><w:rPr>\n" +
+            "  <w:rFonts w:ascii=\"Arial\"/>\n" +
+            "  <w:b w:val=\"false\"/>\n" +
+            "</w:rPr><w:t>Not bold</w:t></w:r></w:p>");
+
+        TextRun run = (TextRun) ((ParagraphBlock) model.content().get(0)).elements().get(0);
+        assertFalse(run.bold(), "b w:val=\"false\" should not be bold");
+    }
+
+    @Test
+    void parsesRunWithUnderlineNone() throws Exception {
+        // w:u w:val="none" 表示无下划线
+        DocumentModel model = parseBody(
+            "<w:p><w:r><w:rPr>\n" +
+            "  <w:rFonts w:ascii=\"Arial\"/>\n" +
+            "  <w:u w:val=\"none\"/>\n" +
+            "</w:rPr><w:t>No underline</w:t></w:r></w:p>");
+
+        TextRun run = (TextRun) ((ParagraphBlock) model.content().get(0)).elements().get(0);
+        assertFalse(run.underline(), "u w:val=\"none\" should not be underline");
+    }
+
+    @Test
+    void parsesRunWithBoldOnByDefault() throws Exception {
+        // <w:b/> 无 val 属性 = 默认启用加粗
+        DocumentModel model = parseBody(
+            "<w:p><w:r><w:rPr>\n" +
+            "  <w:rFonts w:ascii=\"Arial\"/>\n" +
+            "  <w:b/>\n" +
+            "</w:rPr><w:t>Bold text</w:t></w:r></w:p>");
+
+        TextRun run = (TextRun) ((ParagraphBlock) model.content().get(0)).elements().get(0);
+        assertTrue(run.bold(), "b with no val attribute should be bold");
+    }
+
+    // ---- 段落样式属性继承测试 ----
+
+    @Test
+    void parsesParagraphAlignmentFromStyle() throws Exception {
+        // 段落 inline w:pPr 无 w:jc，但 pStyle 引用的样式定义了 w:jc="center"
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"30\">\n" +
+            "  <w:name w:val=\"Centered\"/>\n" +
+            "  <w:pPr><w:jc w:val=\"center\"/></w:pPr>\n" +
+            "</w:style>";
+        DocumentModel model = parseWithStyles(
+            "<w:p><w:pPr><w:pStyle w:val=\"30\"/></w:pPr>\n" +
+            "  <w:r><w:t>Centered via style</w:t></w:r></w:p>", stylesXml);
+
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        assertEquals("center", para.alignment(), "alignment should be center from style");
+    }
+
+    @Test
+    void parsesParagraphOutlineLvlFromStyle() throws Exception {
+        // 段落 inline w:pPr 无 outlineLvl，但 pStyle 引用的样式定义了 outlineLvl
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"Heading1\">\n" +
+            "  <w:name w:val=\"heading 1\"/>\n" +
+            "  <w:pPr><w:outlineLvl w:val=\"0\"/></w:pPr>\n" +
+            "</w:style>";
+        DocumentModel model = parseWithStyles(
+            "<w:p><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr>\n" +
+            "  <w:r><w:t>Heading</w:t></w:r></w:p>", stylesXml);
+
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        assertEquals(Integer.valueOf(0), para.outlineLvl(), "outlineLvl should be 0 from style");
+    }
+
+    @Test
+    void inlineAlignmentOverridesStyle() throws Exception {
+        // inline w:jc 应覆盖 style 中定义的对齐方式
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"30\">\n" +
+            "  <w:name w:val=\"Centered\"/>\n" +
+            "  <w:pPr><w:jc w:val=\"center\"/></w:pPr>\n" +
+            "</w:style>";
+        DocumentModel model = parseWithStyles(
+            "<w:p><w:pPr>\n" +
+            "  <w:pStyle w:val=\"30\"/>\n" +
+            "  <w:jc w:val=\"right\"/>\n" +
+            "</w:pPr>\n" +
+            "  <w:r><w:t>Right aligned</w:t></w:r></w:p>", stylesXml);
+
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        assertEquals("right", para.alignment(), "inline right should override style center");
+    }
+
+    // ---- Run 样式属性继承测试 ----
+
+    @Test
+    void parsesRunBoldFromParaStyle() throws Exception {
+        // Run 无 w:b，但段落样式 pStyle 的 w:rPr 定义了 w:b
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"BoldStyle\">\n" +
+            "  <w:name w:val=\"Bold Paragraph\"/>\n" +
+            "  <w:rPr><w:b/></w:rPr>\n" +
+            "</w:style>";
+        DocumentModel model = parseWithStyles(
+            "<w:p><w:pPr><w:pStyle w:val=\"BoldStyle\"/></w:pPr>\n" +
+            "  <w:r><w:rPr><w:rFonts w:ascii=\"Arial\"/></w:rPr><w:t>Bold from style</w:t></w:r></w:p>", stylesXml);
+
+        TextRun run = (TextRun) ((ParagraphBlock) model.content().get(0)).elements().get(0);
+        assertTrue(run.bold(), "bold should be inherited from paragraph style's rPr");
+    }
+
+    @Test
+    void inlineBoldOffOverridesStyleBold() throws Exception {
+        // inline w:b w:val="0" 应覆盖 style 中定义的 w:b
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"BoldStyle\">\n" +
+            "  <w:name w:val=\"Bold Paragraph\"/>\n" +
+            "  <w:rPr><w:b/></w:rPr>\n" +
+            "</w:style>";
+        DocumentModel model = parseWithStyles(
+            "<w:p><w:pPr><w:pStyle w:val=\"BoldStyle\"/></w:pPr>\n" +
+            "  <w:r><w:rPr><w:rFonts w:ascii=\"Arial\"/><w:b w:val=\"0\"/></w:rPr><w:t>Not bold</w:t></w:r></w:p>", stylesXml);
+
+        TextRun run = (TextRun) ((ParagraphBlock) model.content().get(0)).elements().get(0);
+        assertFalse(run.bold(), "inline b w:val=0 should override style bold");
+    }
+
+    @Test
     void parsesParagraphAlignment() throws Exception {
         DocumentModel model = parseBody(
             "<w:p><w:pPr><w:jc w:val=\"center\"/></w:pPr>\n" +
@@ -273,6 +412,41 @@ class DocumentParserTest {
     }
 
     @Test
+    void fallsBackToDefaultParagraphStyleWhenNoPStyle() throws Exception {
+        // Default paragraph style (w:default="1") explicitly sets ascii="Times New Roman",
+        // overriding docDefaults which uses asciiTheme → Calibri.
+        // A paragraph WITHOUT w:pStyle should still inherit from the default paragraph style.
+        String stylesXml =
+            "<w:docDefaults>" +
+            "  <w:rPrDefault><w:rPr>" +
+            "    <w:rFonts w:asciiTheme=\"minorHAnsi\" w:eastAsiaTheme=\"minorEastAsia\"/>" +
+            "  </w:rPr></w:rPrDefault>" +
+            "  <w:pPrDefault/>" +
+            "</w:docDefaults>" +
+            "<w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"a\">" +
+            "  <w:name w:val=\"Normal\"/>" +
+            "  <w:rPr>" +
+            "    <w:rFonts w:ascii=\"Times New Roman\" w:eastAsia=\"宋体\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/>" +
+            "  </w:rPr>" +
+            "</w:style>";
+
+        // Paragraph has NO w:pStyle — should fall back to default paragraph style "a"
+        String bodyXml =
+            "<w:p>" +
+            "  <w:r><w:rPr><w:rFonts w:hint=\"eastAsia\"/></w:rPr><w:t>测试</w:t></w:r>" +
+            "</w:p>";
+
+        DocumentModel model = parseBodyWithStyles(bodyXml, stylesXml);
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        TextRun run = (TextRun) para.elements().get(0);
+        assertNotNull(run.font(), "Font should not be null");
+        assertEquals("Times New Roman", run.font().name(),
+                "Should inherit ascii font from default paragraph style, not docDefaults");
+        assertEquals("宋体", run.font().eastAsia(),
+                "Should inherit eastAsia font from default paragraph style");
+    }
+
+    @Test
     void fallsBackToDocDefaultsForMissingAsciiFont() throws Exception {
         String stylesXml =
             "<w:docDefaults>" +
@@ -286,7 +460,6 @@ class DocumentParserTest {
             "</w:style>";
 
         // Run with hint=eastAsia but no explicit ascii — should fallback to docDefaults
-        // CSS output: font-family: 'Times New Roman', '宋体' is correct (Latin→TNR, CJK→宋体)
         String bodyXml =
             "<w:p><w:pPr><w:pStyle w:val=\"Normal\"/></w:pPr>" +
             "  <w:r><w:rPr><w:rFonts w:hint=\"eastAsia\"/></w:rPr><w:t>测试</w:t></w:r>" +
@@ -649,6 +822,51 @@ class DocumentParserTest {
     }
 
     @Test
+    void tableWidthAutoIsNotOutputAsZero() throws Exception {
+        // <w:tblW w:w="0" w:type="auto"/> means "auto width" in OOXML,
+        // NOT a literal width of 0. The model should store null so CSS
+        // omits the width property (equivalent to width: auto).
+        String bodyXml =
+            "<w:tbl>" +
+            "  <w:tblPr>" +
+            "    <w:tblW w:w=\"0\" w:type=\"auto\"/>" +
+            "  </w:tblPr>" +
+            "  <w:tr><w:tc><w:p><w:r><w:t>A</w:t></w:r></w:p></w:tc></w:tr>" +
+            "</w:tbl>";
+        DocumentModel model = parseBody(bodyXml);
+        TableBlock table = (TableBlock) model.content().get(0);
+        assertNull(table.width(), "type=auto should produce null width, not \"0\"");
+    }
+
+    @Test
+    void tableWidthDxaIsConvertedToPoints() throws Exception {
+        String bodyXml =
+            "<w:tbl>" +
+            "  <w:tblPr>" +
+            "    <w:tblW w:w=\"3000\" w:type=\"dxa\"/>" +
+            "  </w:tblPr>" +
+            "  <w:tr><w:tc><w:p><w:r><w:t>A</w:t></w:r></w:p></w:tc></w:tr>" +
+            "</w:tbl>";
+        DocumentModel model = parseBody(bodyXml);
+        TableBlock table = (TableBlock) model.content().get(0);
+        assertEquals("150.0pt", table.width(), "type=dxa w=3000 should produce 150.0pt");
+    }
+
+    @Test
+    void tableWidthPctIsConvertedToPercent() throws Exception {
+        String bodyXml =
+            "<w:tbl>" +
+            "  <w:tblPr>" +
+            "    <w:tblW w:w=\"5000\" w:type=\"pct\"/>" +
+            "  </w:tblPr>" +
+            "  <w:tr><w:tc><w:p><w:r><w:t>A</w:t></w:r></w:p></w:tc></w:tr>" +
+            "</w:tbl>";
+        DocumentModel model = parseBody(bodyXml);
+        TableBlock table = (TableBlock) model.content().get(0);
+        assertEquals("100%", table.width(), "type=pct w=5000 should produce 100%");
+    }
+
+    @Test
     void tableCellTcBordersNilSuppressesBorder() throws Exception {
         // Table with outer borders + insideV, but a specific cell uses
         // tcBorders val="nil" to suppress the left border.
@@ -741,5 +959,184 @@ class DocumentParserTest {
                 "Cell C should have left border from insideV");
         assertTrue(cellC.rightBorder().hasBorder(),
                 "Cell C right col should have right border from tblRight");
+    }
+
+    // ---- 字体解析：docDefaults 使用主题引用 + 段落样式继承 ----
+
+    private DocumentModel parseBodyWithStylesAndTheme(String bodyXml, String stylesXml, String themeXml) throws Exception {
+        try (TestDocxBuilder builder = new TestDocxBuilder()) {
+            builder.addContentTypes().addRels().addStyles(stylesXml).addTheme(themeXml).addDocument(bodyXml);
+            Path docxPath = builder.build();
+            Path extracted = DocxExtractor.extract(docxPath);
+            try {
+                return DocumentParser.parse(extracted);
+            } finally {
+                DocxExtractor.cleanup(extracted);
+            }
+        }
+    }
+
+    private static final String OFFICE_THEME_XML =
+        "<a:themeElements>\n" +
+        "  <a:clrScheme name=\"Office\">\n" +
+        "    <a:dk1><a:sysClr val=\"windowText\" lastClr=\"000000\"/></a:dk1>\n" +
+        "    <a:lt1><a:sysClr val=\"window\" lastClr=\"FFFFFF\"/></a:lt1>\n" +
+        "    <a:dk2><a:srgbClr val=\"44546A\"/></a:dk2>\n" +
+        "    <a:lt2><a:srgbClr val=\"E7E6E6\"/></a:lt2>\n" +
+        "    <a:accent1><a:srgbClr val=\"5B9BD5\"/></a:accent1>\n" +
+        "    <a:accent2><a:srgbClr val=\"ED7D31\"/></a:accent2>\n" +
+        "    <a:accent3><a:srgbClr val=\"A5A5A5\"/></a:accent3>\n" +
+        "    <a:accent4><a:srgbClr val=\"FFC000\"/></a:accent4>\n" +
+        "    <a:accent5><a:srgbClr val=\"4472C4\"/></a:accent5>\n" +
+        "    <a:accent6><a:srgbClr val=\"70AD47\"/></a:accent6>\n" +
+        "    <a:hlink><a:srgbClr val=\"0563C1\"/></a:hlink>\n" +
+        "    <a:folHlink><a:srgbClr val=\"954F72\"/></a:folHlink>\n" +
+        "  </a:clrScheme>\n" +
+        "  <a:fontScheme name=\"Office\">\n" +
+        "    <a:majorFont>\n" +
+        "      <a:latin typeface=\"Calibri Light\"/>\n" +
+        "      <a:ea typeface=\"\"/>\n" +
+        "      <a:cs typeface=\"\"/>\n" +
+        "      <a:font script=\"Hans\" typeface=\"宋体\"/>\n" +
+        "    </a:majorFont>\n" +
+        "    <a:minorFont>\n" +
+        "      <a:latin typeface=\"Calibri\"/>\n" +
+        "      <a:ea typeface=\"\"/>\n" +
+        "      <a:cs typeface=\"\"/>\n" +
+        "      <a:font script=\"Hans\" typeface=\"宋体\"/>\n" +
+        "    </a:minorFont>\n" +
+        "  </a:fontScheme>\n" +
+        "</a:themeElements>";
+
+    @Test
+    void fallsBackToDocDefaultsThemeFontsForHintEastAsia() throws Exception {
+        // docDefaults 使用主题引用（Word 默认行为），run 仅有 hint="eastAsia"
+        String stylesXml =
+            "<w:docDefaults>" +
+            "  <w:rPrDefault><w:rPr>" +
+            "    <w:rFonts w:asciiTheme=\"minorHAnsi\" w:eastAsiaTheme=\"minorEastAsia\" " +
+            "              w:hAnsiTheme=\"minorHAnsi\" w:cstheme=\"minorBidi\"/>" +
+            "  </w:rPr></w:rPrDefault>" +
+            "  <w:pPrDefault/>" +
+            "</w:docDefaults>" +
+            "<w:style w:type=\"paragraph\" w:styleId=\"Normal\">" +
+            "  <w:name w:val=\"Normal\"/>" +
+            "</w:style>";
+
+        String bodyXml =
+            "<w:p><w:pPr><w:pStyle w:val=\"Normal\"/></w:pPr>" +
+            "  <w:r><w:rPr><w:rFonts w:hint=\"eastAsia\"/></w:rPr><w:t>测试</w:t></w:r>" +
+            "</w:p>";
+
+        DocumentModel model = parseBodyWithStylesAndTheme(bodyXml, stylesXml, OFFICE_THEME_XML);
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        TextRun run = (TextRun) para.elements().get(0);
+        assertNotNull(run.font(), "Font should not be null when docDefaults with theme fonts is present");
+        assertEquals("Calibri", run.font().name(), "Should fallback to docDefaults theme-resolved ascii font");
+        assertEquals("宋体", run.font().eastAsia(), "Should fallback to docDefaults theme-resolved eastAsia font");
+    }
+
+    @Test
+    void inheritsParagraphStyleRunFontsWhenNoRunStyle() throws Exception {
+        // 段落样式定义了 w:rPr/w:rFonts，run 没有 w:rStyle
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"CustomPara\">" +
+            "  <w:name w:val=\"Custom Paragraph\"/>" +
+            "  <w:rPr>" +
+            "    <w:rFonts w:ascii=\"Times New Roman\" w:eastAsia=\"宋体\" w:hAnsi=\"Times New Roman\"/>" +
+            "  </w:rPr>" +
+            "</w:style>";
+
+        // Run 仅有 hint="eastAsia"，没有 rStyle — 应从段落样式继承字体
+        String bodyXml =
+            "<w:p><w:pPr><w:pStyle w:val=\"CustomPara\"/></w:pPr>" +
+            "  <w:r><w:rPr><w:rFonts w:hint=\"eastAsia\"/></w:rPr><w:t>测试</w:t></w:r>" +
+            "</w:p>";
+
+        DocumentModel model = parseBodyWithStyles(bodyXml, stylesXml);
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        TextRun run = (TextRun) para.elements().get(0);
+        assertNotNull(run.font(), "Font should not be null when paragraph style defines fonts");
+        assertEquals("Times New Roman", run.font().name(), "Should inherit ascii font from paragraph style w:rPr");
+        assertEquals("宋体", run.font().eastAsia(), "Should inherit eastAsia font from paragraph style w:rPr");
+    }
+
+    @Test
+    void inheritsParagraphStyleThemeRunFontsWhenNoRunStyle() throws Exception {
+        // 段落样式使用主题引用，run 没有 rStyle
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"Normal\">" +
+            "  <w:name w:val=\"Normal\"/>" +
+            "  <w:rPr>" +
+            "    <w:rFonts w:asciiTheme=\"minorHAnsi\" w:eastAsiaTheme=\"minorEastAsia\"/>" +
+            "  </w:rPr>" +
+            "</w:style>";
+
+        String bodyXml =
+            "<w:p><w:pPr><w:pStyle w:val=\"Normal\"/></w:pPr>" +
+            "  <w:r><w:rPr><w:rFonts w:hint=\"eastAsia\"/></w:rPr><w:t>测试</w:t></w:r>" +
+            "</w:p>";
+
+        DocumentModel model = parseBodyWithStylesAndTheme(bodyXml, stylesXml, OFFICE_THEME_XML);
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        TextRun run = (TextRun) para.elements().get(0);
+        assertNotNull(run.font(), "Font should not be null when paragraph style uses theme fonts");
+        assertEquals("Calibri", run.font().name(), "Should inherit theme-resolved ascii font from paragraph style");
+        assertEquals("宋体", run.font().eastAsia(), "Should inherit theme-resolved eastAsia font from paragraph style");
+    }
+
+    @Test
+    void runStyleOverridesParagraphStyleFonts() throws Exception {
+        // 段落样式和 run 样式都定义字体 — run 样式优先
+        String stylesXml =
+            "<w:style w:type=\"paragraph\" w:styleId=\"ParaStyle\">" +
+            "  <w:name w:val=\"Para Style\"/>" +
+            "  <w:rPr>" +
+            "    <w:rFonts w:ascii=\"Arial\" w:eastAsia=\"黑体\"/>" +
+            "  </w:rPr>" +
+            "</w:style>" +
+            "<w:style w:type=\"character\" w:styleId=\"RunStyle\">" +
+            "  <w:name w:val=\"Run Style\"/>" +
+            "  <w:rPr>" +
+            "    <w:rFonts w:ascii=\"Times New Roman\" w:eastAsia=\"宋体\"/>" +
+            "  </w:rPr>" +
+            "</w:style>";
+
+        String bodyXml =
+            "<w:p><w:pPr><w:pStyle w:val=\"ParaStyle\"/></w:pPr>" +
+            "  <w:r><w:rPr><w:rStyle w:val=\"RunStyle\"/><w:rFonts w:hint=\"eastAsia\"/></w:rPr><w:t>测试</w:t></w:r>" +
+            "</w:p>";
+
+        DocumentModel model = parseBodyWithStyles(bodyXml, stylesXml);
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        TextRun run = (TextRun) para.elements().get(0);
+        assertNotNull(run.font(), "Font should not be null");
+        assertEquals("Times New Roman", run.font().name(), "Run style should override paragraph style for ascii font");
+        assertEquals("宋体", run.font().eastAsia(), "Run style should override paragraph style for eastAsia font");
+    }
+
+    @Test
+    void noStyleRunFallsBackToDocDefaultsThemeFonts() throws Exception {
+        // 无 run style、无 paragraph style 的 run，回退到 docDefaults 主题字体
+        String stylesXml =
+            "<w:docDefaults>" +
+            "  <w:rPrDefault><w:rPr>" +
+            "    <w:rFonts w:asciiTheme=\"minorHAnsi\" w:eastAsiaTheme=\"minorEastAsia\" " +
+            "              w:hAnsiTheme=\"minorHAnsi\" w:cstheme=\"minorBidi\"/>" +
+            "  </w:rPr></w:rPrDefault>" +
+            "  <w:pPrDefault/>" +
+            "</w:docDefaults>";
+
+        String bodyXml =
+            "<w:p>" +
+            "  <w:r><w:rPr><w:rFonts w:hint=\"eastAsia\"/></w:rPr><w:t>测试</w:t></w:r>" +
+            "</w:p>";
+
+        DocumentModel model = parseBodyWithStylesAndTheme(bodyXml, stylesXml, OFFICE_THEME_XML);
+        ParagraphBlock para = (ParagraphBlock) model.content().get(0);
+        TextRun run = (TextRun) para.elements().get(0);
+        assertNotNull(run.font(), "Font should not be null when docDefaults with theme fonts is present");
+        assertEquals("Calibri", run.font().name(), "Should fallback to docDefaults theme-resolved ascii font");
+        assertEquals("宋体", run.font().eastAsia(), "Should fallback to docDefaults theme-resolved eastAsia font");
     }
 }

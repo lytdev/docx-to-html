@@ -15,22 +15,27 @@ public final class TableRow {
 
     /** 行内的单元格列表，List&lt;TableCell&gt; 类型，不可为 null */
     private final List<TableCell> cells;
-    /** 行高，原始 twips 值（如 "720" 表示 36pt），可为 null 表示未指定 */
+    /** 行高（已转换为 CSS pt 值，如 "101.5"），可为 null 表示未指定 */
     private final String height;
+    /** 行高规则：null / "auto" 自动；"atLeast" 最小高度；"exact" 精确高度 */
+    private final String hRule;
 
     /**
      * 构造表格行。
      *
      * @param cells  单元格列表，List&lt;TableCell&gt; 类型
-     * @param height 行高（twips），String 类型，可为 null
+     * @param height 行高（CSS pt 值），String 类型，可为 null
+     * @param hRule  行高规则，可为 null（同 auto）
      */
-    public TableRow(List<TableCell> cells, String height) {
+    public TableRow(List<TableCell> cells, String height, String hRule) {
         this.cells = cells;
         this.height = height;
+        this.hRule = hRule;
     }
 
     public List<TableCell> cells() { return cells; }
     public String height() { return height; }
+    public String hRule() { return hRule; }
 
     @Override
     public boolean equals(Object o) {
@@ -38,16 +43,17 @@ public final class TableRow {
         if (!(o instanceof TableRow)) return false;
         TableRow that = (TableRow) o;
         return Objects.equals(cells, that.cells)
-                && Objects.equals(height, that.height);
+                && Objects.equals(height, that.height)
+                && Objects.equals(hRule, that.hRule);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(cells, height);
+        return Objects.hash(cells, height, hRule);
     }
 
     @Override
     public String toString() {
-        return "TableRow[cells=" + cells + ", height=" + height + "]";
+        return "TableRow[cells=" + cells + ", height=" + height + ", hRule=" + hRule + "]";
     }
 }

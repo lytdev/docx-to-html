@@ -55,23 +55,26 @@ public final class StyleMapper {
      * @return 拼接好的 CSS 样式字符串，各属性以 "; " 分隔；若无任何样式则返回空字符串
      */
     public static String runStyle(TextRun run) {
+        return runStyle(run, false);
+    }
+
+    /**
+     * 将文本运行样式映射为 CSS，可指定主字体方向。
+     *
+     * @param run             文本运行对象
+     * @param eastAsiaPrimary true 表示东亚字体优先（用于 CJK 字符），false 表示拉丁字体优先（用于英文/数字）
+     * @return CSS 样式字符串
+     */
+    static String runStyle(TextRun run, boolean eastAsiaPrimary) {
         ArrayList<String> parts = new ArrayList<String>();
         FontSpec font = run.font();
 
         if (font != null) {
-            // 构建字体族列表：优先使用拉丁字体，附加东亚字体作为后备
+            // 构建字体族列表
             // 注意：字体名使用单引号包裹，避免与 HTML style="..." 的双引号冲突
-            if (font.name() != null && !font.name().isEmpty()) {
-                StringBuilder family = new StringBuilder("'" + font.name() + "'");
-                if (font.eastAsia() != null && !font.eastAsia().isEmpty()
-                        && !font.eastAsia().equals(font.name())) {
-                    // 东亚字体与拉丁字体不同时，追加为 CSS font-family 后备值
-                    family.append(", '").append(font.eastAsia()).append("'");
-                }
+            String family = buildFontFamily(font, eastAsiaPrimary);
+            if (family != null) {
                 parts.add("font-family: " + family);
-            } else if (font.eastAsia() != null && !font.eastAsia().isEmpty()) {
-                // 仅有东亚字体时直接使用
-                parts.add("font-family: '" + font.eastAsia() + "'");
             }
             if (font.size() != null && !font.size().isEmpty()) {
                 // 字号单位转换：OOXML 中 w:sz 以半磅为单位，需除以 2 得到 pt
@@ -212,6 +215,38 @@ public final class StyleMapper {
         } else {
             parts.add(cssProp + ": none");
         }
+    }
+
+    /**
+     * 根据指定的主字体方向构建 font-family CSS 值。
+     *
+     * @param font            字体规格
+     * @param eastAsiaPrimary true 表示东亚字体为主（CJK 文本），false 表示拉丁字体为主（英文/数字）
+     * @return font-family CSS 值（含单引号包裹的字体名），若无需输出字体则返回 null
+     */
+    static String buildFontFamily(FontSpec font, boolean eastAsiaPrimary) {
+        if (eastAsiaPrimary) {
+            // CJK 文本：东亚字体优先
+            if (font.eastAsia() != null && !font.eastAsia().isEmpty()) {
+                if (font.name() != null && !font.name().isEmpty()
+                        && !font.name().equals(font.eastAsia())) {
+                    return "'" + font.eastAsia() + "', '" + font.name() + "'";
+                }
+                return "'" + font.eastAsia() + "'";
+            }
+        }
+        // 拉丁文本（默认）：拉丁字体优先
+        if (font.name() != null && !font.name().isEmpty()) {
+            if (font.eastAsia() != null && !font.eastAsia().isEmpty()
+                    && !font.eastAsia().equals(font.name())) {
+                return "'" + font.name() + "', '" + font.eastAsia() + "'";
+            }
+            return "'" + font.name() + "'";
+        }
+        if (font.eastAsia() != null && !font.eastAsia().isEmpty()) {
+            return "'" + font.eastAsia() + "'";
+        }
+        return null;
     }
 
     /**

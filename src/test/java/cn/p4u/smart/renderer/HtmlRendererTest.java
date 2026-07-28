@@ -50,7 +50,7 @@ class HtmlRendererTest {
         ParagraphBlock cellPara = new ParagraphBlock("", null, null, null, Arrays.asList(run));
         TableCell cell = new TableCell(Arrays.asList(cellPara), 1, 1, null,
                 BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE, null, true);
-        TableRow row = new TableRow(Arrays.asList(cell), null);
+        TableRow row = new TableRow(Arrays.asList(cell), null, null);
         TableBlock table = new TableBlock(Arrays.asList(row), null,
                 BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE,
                 BorderSpec.NONE, BorderSpec.NONE, true);
@@ -79,7 +79,7 @@ class HtmlRendererTest {
         ParagraphBlock cellPara = new ParagraphBlock("", null, null, null, Collections.<ParagraphElement>emptyList());
         TableCell cell = new TableCell(Arrays.asList(cellPara), 1, 1, null,
                 BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE, null, false);
-        TableRow row = new TableRow(Arrays.asList(cell), null);
+        TableRow row = new TableRow(Arrays.asList(cell), null, null);
         TableBlock table = new TableBlock(Arrays.asList(row), null,
                 BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE, BorderSpec.NONE,
                 BorderSpec.NONE, BorderSpec.NONE, false);
@@ -148,8 +148,9 @@ class HtmlRendererTest {
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
         String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
-        assertTrue(html.contains("font-family: 'Calibri', '宋体'"),
-                "Expected East-Asian font fallback, got: " + html);
+        // CJK text "你好" → East-Asian font primary
+        assertTrue(html.contains("font-family: '宋体', 'Calibri'"),
+                "Expected East-Asian font primary for CJK text, got: " + html);
     }
 
     @Test

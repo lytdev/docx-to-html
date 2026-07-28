@@ -46,11 +46,19 @@ public final class StylesParser {
         private final Map<String, StyleDef> styles;
         /** 文档默认字符属性的原始嵌套 map，结构与 StyleDef.rawRunAttrs 一致；可为 null */
         private final Map<String, Map<String, String>> docDefaultRunAttrs;
+        /** 默认段落样式的 styleId（标记 w:default="1" 且 w:type="paragraph"）；可为 null */
+        private final String defaultParaStyleId;
+        /** 默认字符样式的 styleId（标记 w:default="1" 且 w:type="character"）；可为 null */
+        private final String defaultCharStyleId;
 
         public StylesResult(Map<String, StyleDef> styles,
-                            Map<String, Map<String, String>> docDefaultRunAttrs) {
+                            Map<String, Map<String, String>> docDefaultRunAttrs,
+                            String defaultParaStyleId,
+                            String defaultCharStyleId) {
             this.styles = styles;
             this.docDefaultRunAttrs = docDefaultRunAttrs;
+            this.defaultParaStyleId = defaultParaStyleId;
+            this.defaultCharStyleId = defaultCharStyleId;
         }
 
         /** @return 样式映射，不可变 */
@@ -58,6 +66,12 @@ public final class StylesParser {
 
         /** @return 文档默认字符属性嵌套 map，可能为 null */
         public Map<String, Map<String, String>> docDefaultRunAttrs() { return docDefaultRunAttrs; }
+
+        /** @return 默认段落样式 ID，可能为 null */
+        public String defaultParaStyleId() { return defaultParaStyleId; }
+
+        /** @return 默认字符样式 ID，可能为 null */
+        public String defaultCharStyleId() { return defaultCharStyleId; }
     }
 
     /**
@@ -72,7 +86,7 @@ public final class StylesParser {
     public static StylesResult parse(Path stylesFile) {
         if (!java.nio.file.Files.exists(stylesFile)) {
             LOG.warning("Styles file not found: " + stylesFile);
-            return new StylesResult(Collections.<String, StyleDef>emptyMap(), null);
+            return new StylesResult(Collections.<String, StyleDef>emptyMap(), null, null, null);
         }
         try {
             // 构建 DOM 解析器，启用命名空间支持以便用 getElementsByTagNameNS 精确查找元素
@@ -95,6 +109,10 @@ public final class StylesParser {
             // 解析 w:docDefaults 中的默认字符属性
             Map<String, Map<String, String>> docDefaultRunAttrs = parseDocDefaults(doc);
 
+            // 检测默认段落 / 字符样式（标记 w:default="1"）
+            String defaultParaStyleId = null;
+            String defaultCharStyleId = null;
+
             // 遍历所有 w:style 元素，逐个提取样式属性
             NodeList styleNodes = doc.getElementsByTagNameNS(W, "style");
             for (int i = 0; i < styleNodes.getLength(); i++) {
@@ -105,6 +123,17 @@ public final class StylesParser {
                 String name = getText(el, "name", "val");
                 String basedOn = getText(el, "basedOn", "val");
                 Integer outlineLvl = getOutlineLvl(el);
+
+                // 检测 w:default="1" 和 w:type
+                String styleType = el.getAttributeNS(W, "type");
+                String isDefault = el.getAttributeNS(W, "default");
+                if ("1".equals(isDefault)) {
+                    if ("paragraph".equals(styleType) && defaultParaStyleId == null) {
+                        defaultParaStyleId = styleId;
+                    } else if ("character".equals(styleType) && defaultCharStyleId == null) {
+                        defaultCharStyleId = styleId;
+                    }
+                }
 
                 // 同时提取简写属性和原始属性两种形态，供不同解析阶段使用
                 Map<String, String> runProps = parseProps(el, "rPr");
@@ -117,10 +146,11 @@ public final class StylesParser {
                 styles.put(styleId, new StyleDef(styleId, name, basedOn, outlineLvl,
                         runProps, paraProps, rawRunAttrs, rawParaAttrs, rawTblAttrs));
             }
-            return new StylesResult(Collections.unmodifiableMap(styles), docDefaultRunAttrs);
+            return new StylesResult(Collections.unmodifiableMap(styles), docDefaultRunAttrs,
+                    defaultParaStyleId, defaultCharStyleId);
         } catch (Exception e) {
             LOG.warning("Failed to parse styles: " + e.getMessage());
-            return new StylesResult(Collections.<String, StyleDef>emptyMap(), null);
+            return new StylesResult(Collections.<String, StyleDef>emptyMap(), null, null, null);
         }
     }
 

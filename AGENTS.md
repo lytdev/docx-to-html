@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Build & Test Commands
 
@@ -31,12 +31,6 @@ Three-phase pipeline where each stage produces a standalone, testable output:
 
 **Style resolution (DocumentParser):** Two-phase at parse time — first `mergeWithParents()` walks `basedOn` chains, then `resolveThemeInStyles()` replaces all theme references (fonts, colors) with concrete values. `docDefaults` are injected as a synthetic base style for all root styles. The renderer receives fully-resolved styles — it never looks up themes or style chains.
 
-**Property inheritance from styles (DocumentParser):** When inline `w:pPr`/`w:rPr` omits a property, the parser falls back to the style referenced by `w:pStyle`/`w:rStyle`.
-
-- **Paragraph properties (alignment, outlineLvl, indentation):** `parseParagraph()` checks inline `w:pPr` first; if `null`, reads from `styleDef.paragraphProps()` (e.g., `jc` → alignment) or `styleDef.rawParaAttrs()` (e.g., `ind` → indentation). The style's `outlineLvl()` field is used directly since it's already merged in `mergeWithParents()`.
-- **Run boolean properties (bold, italic, underline, strike):** `parseRun()` and `parseRunWithText()` use `hasElement()` to detect whether the element exists in inline `w:rPr`. If present, use `isBoolPropEnabled()` to evaluate its `w:val`; if absent, call `resolveBoolPropFromStyles()` which walks run style chain → paragraph style chain → returns `false`. This ensures `<w:b w:val="0"/>` (explicitly off) overrides any style-level bold.
-- **Font properties:** Already inherited via `resolveInheritedFontSpec()`, which walks run style chain → paragraph style chain → docDefaults.
-
 **Border model:** Under `border-collapse:collapse`, CSS conflict resolution causes table-level borders to override cell-level `border:none`. Therefore `StyleMapper.tableStyle()` outputs `border: none` on `<table>` — all border widths/colors are on cells only. `DocumentParser.parseTableCell()` assigns borders by position: edge cells get table outer borders (`isTopRow→tblTop`, etc.), interior cells get `insideH`/`insideV`. Cell-level `tcBorders` can override any side; `val="nil"` or `val="none"` explicitly suppresses it to `BorderSpec.NONE`. For `rowspan>1` cells, vMerge continue rows' `tcBorders` are merged in reverse order.
 
 **Model tree:** Marker interfaces `ContentBlock` and `ParagraphElement` — no visitor pattern, renderer uses `instanceof` dispatch. All model classes are `final` with immutable fields and `Collections.unmodifiableList()` wrapping.
@@ -47,7 +41,7 @@ DocumentModel
   ├── numberingFormats: Map<String, String>   (numId → numFmt)
   ├── theme: ThemeDef
   └── content: List<ContentBlock>
-        ├── ParagraphBlock (styleId, alignment, outlineLvl, indentation, numId, ilvl, elements: List<ParagraphElement>)
+        ├── ParagraphBlock (numId, ilvl, outlineLvl, elements: List<ParagraphElement>)
         │     ├── TextRun      (FontSpec, text, highlight, shading, superscript/subscript)
         │     ├── ImageElement (mediaPath, mime, width, height, wrapMode)
         │     ├── MathElement  (latex, mathml, imagePath)
@@ -95,7 +89,7 @@ DocumentModel
 
 **Shapes:** Inline SVG. `presetToSvgPath()` maps 15 known presets; unknown → `<rect>`. Group shapes recurse children with `chOff`/`chExt` coordinate scaling.
 
-**Font-family construction (StyleMapper):** When the Latin and East-Asian fonts differ, `HtmlRenderer.renderTextRun()` splits text into CJK and non-CJK segments by Unicode range. CJK segments use East-Asian font first (`font-family: '宋体', 'Times New Roman'`); non-CJK segments use Latin font first (`font-family: 'Times New Roman', '宋体'`). This matches Word's per-Unicode-range font selection. If only one font exists, it is used directly. Duplicates omitted.
+**Font-family construction (StyleMapper):** Latin font first, East-Asian as comma-separated fallback (single-quoted). Duplicates omitted. If only East-Asian exists, it becomes primary.
 
 **Image handling (three classes):**
 - `DocumentParser` resolves references via `RelsParser`, produces `ImageElement`
@@ -109,20 +103,6 @@ DocumentModel
 When processing inline content, a single `w:r` can contain mixed `w:t`, `w:drawing`, `w:pict`, `m:oMath`, and `mc:AlternateContent`. The `extractRunContent` method splits these into separate `ParagraphElement` objects preserving document order.
 
 Drawing priority: raster image (`a:blip`) > shape group (`wpg:wgp`) > single shape (`wps:wsp`). AlternateContent: tries `mc:Choice` (DrawingML) first, falls back to `mc:Fallback` (VML).
-
-## OOXML Boolean Property Handling
-
-OOXML boolean properties (`w:b`, `w:i`, `w:strike`, `w:u`) follow a specific convention:
-- Element **present without** `w:val` → **enabled** (the element's existence implies "on")
-- `w:val="1"` or `w:val="true"` → **enabled**
-- `w:val="0"` or `w:val="false"` or `w:val="off"` → **disabled** (explicitly off)
-- For `w:u` specifically: `w:val="none"` or `w:val="nil"` → **disabled** (no underline)
-
-**`isBoolPropEnabled(Element parent, String ns, String localName)`** — Use this helper to correctly evaluate OOXML boolean properties. It reads the element's `w:val` attribute and applies the rules above. Do NOT use `hasElement()` alone — it ignores `w:val` and would treat `<w:b w:val="0"/>` as bold=true.
-
-**`resolveBoolPropFromStyles(String runStyleId, String paraStyleId, String propName)`** — Use when a boolean property is absent from inline `w:rPr`. Walks run style basedOn chain then paragraph style basedOn chain. Returns `false` only if neither chain defines the property with a truthy value.
-
-**`parseIndentationFromAttrs(Map<String, String> attrs)`** — Variant of `parseIndentation(Element)` that takes an attribute map (from style's `rawParaAttrs`), used when indentation is inherited from a paragraph style rather than inline `w:ind`.
 
 ## Unit Conversion Rules
 
