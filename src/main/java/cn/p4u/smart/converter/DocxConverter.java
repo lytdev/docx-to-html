@@ -45,10 +45,10 @@ public final class DocxConverter {
         try {
             // 构建包含实际解压路径的有效配置（原始 config 的 extractedDir 通常为 null）
             ConversionConfig effectiveConfig = new ConversionConfig(
-                    config.imageMode(),
-                    config.imageOutputDir(),
+                    config.imageUriResolver(),
                     extractedDir,
-                    config.keepTemp()
+                    config.keepTemp(),
+                    config.latexRenderUrl()
             );
             // 阶段二：解析 XML 文件构建文档模型
             DocumentModel model = DocumentParser.parse(extractedDir);
