@@ -1,6 +1,6 @@
 package cn.p4u.smart.renderer;
 
-import cn.p4u.smart.util.Jdk8Helpers;
+import java.io.OutputStream;
 
 import java.io.*;
 import java.nio.file.*;
@@ -205,7 +205,7 @@ public final class WmfConverter {
             // 关闭进程的输入流，避免进程阻塞等待输入
             proc.getOutputStream().close();
             // 消费输出流，防止缓冲区满导致进程挂起
-            Jdk8Helpers.transferTo(proc.getInputStream(), Jdk8Helpers.nullOutputStream());
+            proc.getInputStream().transferTo(OutputStream.nullOutputStream());
             int code = proc.waitFor();
             return code == 0;
         } catch (Exception e) {
@@ -236,7 +236,7 @@ public final class WmfConverter {
                 pb.redirectErrorStream(true);
                 Process proc = pb.start();
                 proc.getOutputStream().close();
-                Jdk8Helpers.transferTo(proc.getInputStream(), Jdk8Helpers.nullOutputStream());
+                proc.getInputStream().transferTo(OutputStream.nullOutputStream());
                 if (proc.waitFor() == 0) return true;
             } catch (Exception e) {
                 LOG.warning("Configured ImageMagick path '" + configuredPath + "' is not usable: " + e.getMessage());
@@ -249,7 +249,7 @@ public final class WmfConverter {
                 pb.redirectErrorStream(true);
                 Process proc = pb.start();
                 proc.getOutputStream().close();
-                Jdk8Helpers.transferTo(proc.getInputStream(), Jdk8Helpers.nullOutputStream());
+                proc.getInputStream().transferTo(OutputStream.nullOutputStream());
                 if (proc.waitFor() == 0) return true;
             } catch (Exception ignored) {}
         }
@@ -300,7 +300,7 @@ public final class WmfConverter {
                 pb.redirectErrorStream(true);
                 Process proc = pb.start();
                 proc.getOutputStream().close();
-                Jdk8Helpers.transferTo(proc.getInputStream(), Jdk8Helpers.nullOutputStream());
+                proc.getInputStream().transferTo(OutputStream.nullOutputStream());
                 if (proc.waitFor() == 0) return cmd;
             } catch (Exception ignored) {}
         }
