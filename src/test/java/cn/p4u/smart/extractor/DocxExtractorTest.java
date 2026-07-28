@@ -22,7 +22,7 @@ class DocxExtractorTest {
             try {
                 assertTrue(Files.isDirectory(extracted));
                 assertTrue(Files.exists(extracted.resolve("word/document.xml")));
-                String content = cn.p4u.smart.util.Jdk8Helpers.readString(extracted.resolve("word/document.xml"));
+                String content = Files.readString(extracted.resolve("word/document.xml"));
                 assertTrue(content.contains("Hello"));
             } finally {
                 DocxExtractor.cleanup(extracted);

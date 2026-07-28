@@ -16,7 +16,7 @@ class RelsParserTest {
             "</Relationships>";
 
         Path tempFile = Files.createTempFile("rels", ".xml");
-        cn.p4u.smart.util.Jdk8Helpers.writeString(tempFile, xml);
+        Files.writeString(tempFile, xml);
         try {
             Map<String, RelsParser.Rel> rels = RelsParser.parse(tempFile);
             assertEquals(2, rels.size());

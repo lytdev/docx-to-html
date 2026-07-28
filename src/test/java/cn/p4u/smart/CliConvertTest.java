@@ -3,8 +3,8 @@ package cn.p4u.smart;
 import cn.p4u.smart.converter.ConversionConfig;
 import cn.p4u.smart.converter.ConversionResult;
 import cn.p4u.smart.converter.DocxConverter;
-import cn.p4u.smart.util.Jdk8Helpers;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class CliConvertTest {
 
     // 根据是否指定输出文件，决定写入文件或打印到 stdout
     if (outputFile != null) {
-      Jdk8Helpers.writeString(outputFile, html);
+      Files.writeString(outputFile, html);
     } else {
       System.out.println(html);
     }

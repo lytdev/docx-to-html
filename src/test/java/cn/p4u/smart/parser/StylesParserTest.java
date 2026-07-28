@@ -11,7 +11,7 @@ class StylesParserTest {
     /** Parses styles XML and returns the styles map from StylesResult. */
     private Map<String, StyleDef> parseStyles(String xml) throws Exception {
         Path tempFile = Files.createTempFile("styles", ".xml");
-        cn.p4u.smart.util.Jdk8Helpers.writeString(tempFile, xml);
+        Files.writeString(tempFile, xml);
         try {
             return StylesParser.parse(tempFile).styles();
         } finally {
@@ -97,7 +97,7 @@ class StylesParserTest {
             "</w:styles>";
 
         Path tempFile = Files.createTempFile("styles", ".xml");
-        cn.p4u.smart.util.Jdk8Helpers.writeString(tempFile, xml);
+        Files.writeString(tempFile, xml);
         try {
             StylesParser.StylesResult result = StylesParser.parse(tempFile);
             // styles map should contain the Normal style
@@ -126,7 +126,7 @@ class StylesParserTest {
             "</w:styles>";
 
         Path tempFile = Files.createTempFile("styles", ".xml");
-        cn.p4u.smart.util.Jdk8Helpers.writeString(tempFile, xml);
+        Files.writeString(tempFile, xml);
         try {
             StylesParser.StylesResult result = StylesParser.parse(tempFile);
             assertNull(result.docDefaultRunAttrs());

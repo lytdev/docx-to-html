@@ -46,7 +46,7 @@ class ThemeParserTest {
     @Test
     void parsesFullTheme() throws Exception {
         Path tempFile = Files.createTempFile("theme", ".xml");
-        cn.p4u.smart.util.Jdk8Helpers.writeString(tempFile, THEME_XML);
+        Files.writeString(tempFile, THEME_XML);
         try {
             ThemeDef theme = ThemeParser.parse(tempFile);
             assertNotNull(theme);
@@ -83,7 +83,7 @@ class ThemeParserTest {
     void sysClrUsesLastClr() throws Exception {
         // dk1 uses sysClr with lastClr="000000" -- should resolve to "000000"
         Path tempFile = Files.createTempFile("theme", ".xml");
-        cn.p4u.smart.util.Jdk8Helpers.writeString(tempFile, THEME_XML);
+        Files.writeString(tempFile, THEME_XML);
         try {
             ThemeDef theme = ThemeParser.parse(tempFile);
             assertEquals("000000", theme.colors().dk1());
