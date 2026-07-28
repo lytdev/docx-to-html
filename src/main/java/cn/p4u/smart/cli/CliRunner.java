@@ -4,7 +4,6 @@ import cn.p4u.smart.converter.ConversionConfig;
 import cn.p4u.smart.converter.ConversionConfig.ImageMode;
 import cn.p4u.smart.converter.ConversionResult;
 import cn.p4u.smart.converter.DocxConverter;
-import cn.p4u.smart.util.Jdk8Helpers;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -75,7 +74,7 @@ public class CliRunner implements Callable<Integer> {
 
         // 根据是否指定输出文件，决定写入文件或打印到 stdout
         if (outputFile != null) {
-            Jdk8Helpers.writeString(outputFile, html);
+            Files.writeString(outputFile, html);
             System.out.println("Written to " + outputFile);
         } else {
             System.out.println(html);
