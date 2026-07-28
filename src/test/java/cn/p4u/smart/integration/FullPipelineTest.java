@@ -15,7 +15,7 @@ class FullPipelineTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocument(bodyXml);
             Path docxPath = builder.build();
-            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.base64Defaults());
+            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.defaults());
             return result.html();
         }
     }
@@ -24,7 +24,7 @@ class FullPipelineTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocumentRels(relsXml).addDocument(bodyXml);
             Path docxPath = builder.build();
-            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.base64Defaults());
+            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.defaults());
             return result.html();
         }
     }
@@ -185,7 +185,7 @@ class FullPipelineTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addStyles(stylesXml).addTheme(themeXml).addDocument(bodyXml);
             Path docxPath = builder.build();
-            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.base64Defaults());
+            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.defaults());
             String html = result.html();
 
             assertTrue(html.contains("<h1"), "Expected <h1> for heading, got: " + html);

@@ -19,7 +19,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, "left", null, Arrays.asList(run));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("<p"));
         assertTrue(html.contains("font-family: 'SimSun'"));
         assertTrue(html.contains("font-weight: bold"));
@@ -36,7 +36,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(link));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("href=\"https://example.com\""));
         assertTrue(html.contains("click</span></a>"));
         assertTrue(html.contains("color: #0563C1"));
@@ -56,7 +56,7 @@ class HtmlRendererTest {
                 BorderSpec.NONE, BorderSpec.NONE, true);
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(table), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("<table"));
         // 无边框表格应输出 border: none 而非 border-collapse
         assertTrue(html.contains("border: none"));
@@ -70,7 +70,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(math));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("data-latex=\"E=mc^2\""));
     }
 
@@ -85,7 +85,7 @@ class HtmlRendererTest {
                 BorderSpec.NONE, BorderSpec.NONE, false);
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(table), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("visibility: hidden"));
     }
 
@@ -97,7 +97,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(run));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.startsWith("<!DOCTYPE html>"));
         assertTrue(html.contains("<html>"));
         assertTrue(html.contains("</html>"));
@@ -112,7 +112,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", 0, null, null, Arrays.asList(run));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("<h1>"));
     }
 
@@ -135,7 +135,7 @@ class HtmlRendererTest {
         stylesMap.put("MyTitle", customStyle);
         DocumentModel model = new DocumentModel(stylesMap, Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("<h1>"), "Expected <h1> via basedOn chain, got: " + html);
     }
 
@@ -147,7 +147,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(run));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         // CJK text "你好" → East-Asian font primary
         assertTrue(html.contains("font-family: '宋体', 'Calibri'"),
                 "Expected East-Asian font primary for CJK text, got: " + html);
@@ -160,7 +160,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(shape));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("<svg"), "Expected <svg> element, got: " + html);
         assertTrue(html.contains("width=\"31\""), "Expected width from EMU->px, got: " + html);
         assertTrue(html.contains("fill=\"#5B9BD5\""), "Expected fill color, got: " + html);
@@ -180,7 +180,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(group));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("<svg"), "Expected <svg> element, got: " + html);
         assertTrue(html.contains("<path"), "Expected <path> for child shape, got: " + html);
         // Verify child is rendered (group width = 400000 EMU -> 42px)
@@ -195,7 +195,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(shape));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("float: left"), "Expected float:left for LEFT wrap, got: " + html);
     }
 
@@ -206,7 +206,7 @@ class HtmlRendererTest {
         ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(shape));
         DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
 
-        String html = HtmlRenderer.render(model, ConversionConfig.base64Defaults());
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
         assertTrue(html.contains("A"), "Ellipse should use arc (A) command, got: " + html);
     }
 }
