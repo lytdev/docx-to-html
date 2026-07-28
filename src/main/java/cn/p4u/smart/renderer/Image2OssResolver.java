@@ -2,7 +2,9 @@ package cn.p4u.smart.renderer;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
+import com.aliyun.oss.model.ObjectMetadata;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,7 +50,9 @@ public final class Image2OssResolver implements ImageUriResolver, AutoCloseable 
         byte[] data = Files.readAllBytes(imagePath);
         String fileName = imagePath.getFileName().toString();
         String objectKey = basePath + UUID.randomUUID() + "-" + fileName;
-        client.putObject(bucket, objectKey, new java.io.ByteArrayInputStream(data));
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(mimeType);
+        client.putObject(bucket, objectKey, new ByteArrayInputStream(data), metadata);
         String uri = "https://" + bucket + "." + endpoint + "/" + objectKey;
         return new ResolveResult(uri, mimeType);
     }
