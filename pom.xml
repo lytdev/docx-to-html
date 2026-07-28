@@ -17,7 +17,6 @@
     <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <picocli.version>4.7.6</picocli.version>
-    <jpackage.path>${env.JAVA_HOME}/bin/jpackage</jpackage.path>
   </properties>
 
   <dependencies>
@@ -30,6 +29,11 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.18.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.aliyun.oss</groupId>
+      <artifactId>aliyun-sdk-oss</artifactId>
+      <version>3.17.4</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -118,39 +122,7 @@
               </execution>
             </executions>
           </plugin>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>3.5.0</version>
-            <executions>
-              <execution>
-                <id>jpackage</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${jpackage.path}</executable>
-                  <arguments>
-                    <argument>--input</argument>
-                    <argument>${project.build.directory}/jpackage-input</argument>
-                    <argument>--main-jar</argument>
-                    <argument>${project.build.finalName}-all.jar</argument>
-                    <argument>--main-class</argument>
-                    <argument>cn.p4u.smart.gui.GuiRunner</argument>
-                    <argument>--name</argument>
-                    <argument>docx2html</argument>
-                    <argument>--type</argument>
-                    <argument>app-image</argument>
-                    <argument>--dest</argument>
-                    <argument>${project.build.directory}/dist</argument>
-                    <argument>--vendor</argument>
-                    <argument>p4u</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
+
         </plugins>
       </build>
     </profile>
