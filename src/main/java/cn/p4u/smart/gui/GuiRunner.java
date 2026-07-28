@@ -3,7 +3,7 @@ package cn.p4u.smart.gui;
 import cn.p4u.smart.converter.ConversionConfig;
 import cn.p4u.smart.converter.ConversionResult;
 import cn.p4u.smart.converter.DocxConverter;
-import cn.p4u.smart.util.Jdk8Helpers;
+import java.nio.file.Files;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -171,7 +171,7 @@ public class GuiRunner extends JFrame {
                 try {
                     ConversionResult result = get();
                     Path outputPath = deriveOutputPath(selectedFile);
-                    Jdk8Helpers.writeString(outputPath, result.html());
+                    Files.writeString(outputPath, result.html());
                     showSuccessDialog(outputPath);
                     convertButton.setEnabled(false);
                     statusLabel.setText(" ");
