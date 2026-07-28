@@ -2,11 +2,13 @@ package cn.p4u.smart.renderer;
 
 import cn.p4u.smart.converter.ConversionConfig;
 import cn.p4u.smart.model.*;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Locale;
+import java.util.logging.Logger;
 
 /**
  * HTML 渲染器 —— 将 {@link DocumentModel} 树转换为完整的 HTML 字符串。
@@ -26,6 +28,8 @@ import java.util.Locale;
  * <p>本类为无状态工具类，所有方法均为 static，不可实例化。
  */
 public final class HtmlRenderer {
+
+    private static final Logger LOG = Logger.getLogger(HtmlRenderer.class.getName());
 
     /** 私有构造函数，防止实例化 */
     private HtmlRenderer() {}
@@ -471,13 +475,8 @@ public final class HtmlRenderer {
     /**
      * 渲染图片为 &lt;img&gt; 元素。
      *
-     * <p>根据 {@link ConversionConfig.ImageMode} 分两个分支：
-     * <ul>
-     *   <li><b>BASE64 模式</b>：将图片内容编码为 Data URI 直接嵌入 src 属性；
-     *       对于 WMF/EMF 格式会先转换为 PNG 再编码</li>
-     *   <li><b>LINK 模式</b>：将 src 指向相对路径，并把图片文件复制到配置的输出目录；
-     *       WMF/EMF 文件名自动替换为 .png 后缀</li>
-     * </ul>
+     * <p>通过 {@link ImageUriResolver} 统一解析图片 URI，不再根据 ImageMode 分支处理。
+     * WMF/EMF 格式在解析前先转换为 PNG，然后以临时文件形式交给 resolver 处理。
      * 图片尺寸由 EMU 转换为像素，文字环绕模式映射为 CSS float/display 样式。
      *
      * @param sb     用于拼接 HTML 的 StringBuilder
@@ -487,36 +486,54 @@ public final class HtmlRenderer {
     private static void renderImage(StringBuilder sb, ImageElement img, ConversionConfig config) {
         sb.append("<img");
         Path mediaPath = resolveMediaPath(img.mediaPath(), config);
-        // 检测是否为 WMF/EMF 格式，后续需要特殊处理（转换后缀或编码格式）
-        boolean isWmf = WmfConverter.isWmfOrEmf(img.mimeType());
+        if (mediaPath == null || !Files.exists(mediaPath)) {
+            sb.append("><span style=\"color: #999; font-style: italic;\">[image not found]</span>");
+            return;
+        }
 
-        // --- BASE64 模式：将图片编码为 Data URI 嵌入 HTML ---
-        if (config.imageMode() == ConversionConfig.ImageMode.BASE64) {
-            int pxW = img.width() > 0 ? emusToPx(img.width()) : 0;
-            int pxH = img.height() > 0 ? emusToPx(img.height()) : 0;
-            String dataUri = ImageHandler.toBase64DataUri(mediaPath, img.mimeType(), pxW, pxH);
-            if (dataUri.isEmpty()) {
-                // 图片文件不存在时显示占位提示
-                sb.append("<span style=\"color: #999; font-style: italic;\">[image not found]</span>");
+        boolean isWmf = WmfConverter.isWmfOrEmf(img.mimeType());
+        int pxW = img.width() > 0 ? emusToPx(img.width()) : 0;
+        int pxH = img.height() > 0 ? emusToPx(img.height()) : 0;
+
+        ImageUriResolver resolver = config.imageUriResolver();
+        if (isWmf) {
+            // Shared pre-step: convert WMF/EMF to PNG before resolving
+            try {
+                byte[] raw = Files.readAllBytes(mediaPath);
+                byte[] png = WmfConverter.convertToPng(raw, pxW, pxH);
+                if (png != null) {
+                    Path tmpFile = Files.createTempFile("wmf2png", ".png");
+                    Files.write(tmpFile, png);
+                    try {
+                        ImageUriResolver.ResolveResult result = resolver.resolve(tmpFile, "image/png");
+                        sb.append(" src=\"").append(escapeAttr(result.uri())).append("\"");
+                    } finally {
+                        Files.deleteIfExists(tmpFile);
+                    }
+                } else {
+                    // WMF conversion failed — try resolving raw file as fallback
+                    ImageUriResolver.ResolveResult result = resolver.resolve(mediaPath, img.mimeType());
+                    sb.append(" src=\"").append(escapeAttr(result.uri())).append("\"");
+                }
+            } catch (IOException e) {
+                LOG.warning("WMF pre-processing failed for " + mediaPath + ": " + e.getMessage());
+                sb.append("><span style=\"color: #999; font-style: italic;\">[image conversion failed]</span>");
                 return;
             }
-            sb.append(" src=\"").append(dataUri).append("\"");
         } else {
-            // --- LINK 模式：生成相对路径引用并将文件复制到输出目录 ---
-            String relative = img.mediaPath() != null ? img.mediaPath().replace("media/", "") : "";
-            String srcAttr = relative;
-            // WMF/EMF 文件后缀替换为 .png，因为已经被 WmfConverter 转换
-            if (isWmf) srcAttr = relative.replaceAll("\\.(wmf|emf)$", ".png");
-            sb.append(" src=\"").append(escapeAttr(config.imageOutputDir().getFileName() + "/" + srcAttr)).append("\"");
-            // 将原始图片文件复制到配置的输出目录
-            if (mediaPath != null && Files.exists(mediaPath)) {
-                ImageHandler.copyToDir(mediaPath, config.imageOutputDir(), relative);
+            // Non-WMF: resolve directly
+            try {
+                ImageUriResolver.ResolveResult result = resolver.resolve(mediaPath, img.mimeType());
+                sb.append(" src=\"").append(escapeAttr(result.uri())).append("\"");
+            } catch (IOException e) {
+                LOG.warning("Image resolve failed for " + mediaPath + ": " + e.getMessage());
+                sb.append("><span style=\"color: #999; font-style: italic;\">[image resolve failed]</span>");
+                return;
             }
         }
-        // 设置图片宽高（EMU → px）
-        if (img.width() > 0) sb.append(" width=\"").append(emusToPx(img.width())).append("\"");
-        if (img.height() > 0) sb.append(" height=\"").append(emusToPx(img.height())).append("\"");
-        // 根据环绕模式设置 CSS 浮动或居中样式
+
+        if (img.width() > 0) sb.append(" width=\"").append(pxW).append("\"");
+        if (img.height() > 0) sb.append(" height=\"").append(pxH).append("\"");
         if (img.wrapMode() == WrapMode.LEFT) sb.append(" style=\"float: left;\"");
         else if (img.wrapMode() == WrapMode.RIGHT) sb.append(" style=\"float: right;\"");
         else if (img.wrapMode() == WrapMode.TOP_AND_BOTTOM) sb.append(" style=\"display: block; margin: auto;\"");
