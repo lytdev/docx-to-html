@@ -154,6 +154,23 @@ class HtmlRendererTest {
     }
 
     @Test
+    void rendersPrimeMarksWithLatinFont() {
+        TextRun run = new TextRun("a′a″",
+                new FontSpec("Times New Roman", "28", "#000000", "宋体", "Times New Roman"),
+                false, true, false, false, null, null, false, false, "");
+        ParagraphBlock para = new ParagraphBlock("", null, null, null, Arrays.asList(run));
+        DocumentModel model = new DocumentModel(Collections.<String, StyleDef>emptyMap(), Arrays.asList(para), null);
+
+        String html = HtmlRenderer.render(model, ConversionConfig.defaults());
+
+        assertTrue(html.contains("font-family: 'Times New Roman', '宋体'"), html);
+        assertFalse(html.contains("font-family: '宋体', 'Times New Roman'"),
+                "Prime marks must use the Latin font slot, got: " + html);
+        assertTrue(html.contains(">a′a″</span>"),
+                "Latin letters and prime marks should remain in one font run, got: " + html);
+    }
+
+    @Test
     void rendersSingleSvgShape() {
         ShapeElement shape = new ShapeElement("parallelogram", 300000, 100000,
                 "#5B9BD5", "#2E75B6", 1.0f, WrapMode.INLINE);

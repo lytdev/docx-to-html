@@ -433,6 +433,11 @@ public final class HtmlRenderer {
      * @return true 表示属于 CJK 字符范围
      */
     private static boolean isCjkChar(int codePoint) {
+        // PRIME / DOUBLE PRIME 等符号（U+2032-U+2037）在 Word 中使用西文字体槽。
+        // 它们虽然位于 General Punctuation 区块，却不是中文标点；例如工程制图中的
+        // a′、a″ 应跟随拉丁字母使用 w:ascii/w:hAnsi，而不是 w:eastAsia。
+        if (codePoint >= 0x2032 && codePoint <= 0x2037) return false;
+
         return (codePoint >= 0x4E00 && codePoint <= 0x9FFF)     // CJK Unified Ideographs (常用汉字)
             || (codePoint >= 0x3400 && codePoint <= 0x4DBF)     // CJK Unified Ideographs Extension A
             || (codePoint >= 0x20000 && codePoint <= 0x2EBEF)   // CJK Ext B-F (生僻字)
