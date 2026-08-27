@@ -110,7 +110,8 @@ class FullPipelineTest {
         // 无备用图片的公式应输出为浏览器原生渲染的 MathML 元素
         assertTrue(html.contains("<math"), "Expected <math> element, got: " + html);
         assertTrue(html.contains("<msup>"), "Expected MathML msup for superscript, got: " + html);
-        assertTrue(html.contains("<mi mathvariant=\"italic\">x</mi>") || html.contains("<mi>x</mi>"), "Expected MathML mi with x, got: " + html);
+        assertTrue(html.matches("(?s).*<mi[^>]*mathvariant=\"normal\"[^>]*>x</mi>.*"),
+                "Expected unformatted MathML mi with x to stay upright, got: " + html);
     }
 
     @Test

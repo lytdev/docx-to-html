@@ -48,15 +48,18 @@ public final class OmmlToMathmlConverter {
         if ("r".equals(n)) {
             NodeList tNodes = el.getElementsByTagNameNS(M, "t");
             if (tNodes.getLength() > 0) {
-                String text = escapeXml(tNodes.item(0).getTextContent());
+                String text = tNodes.item(0).getTextContent();
                 // 读取 m:rPr 格式属性
                 boolean isNor = hasMathRunProp(el, "nor");     // <m:nor/> → 普通文字格式
                 String styVal = getMathStyVal(el);              // <m:sty val="p"/"i"/"b"/"bi"/"bs"/>
                 boolean styItalic = "i".equals(styVal) || "bi".equals(styVal);
                 boolean styBold = "b".equals(styVal) || "bi".equals(styVal) || "bs".equals(styVal);
                 // 读取 w:rPr 格式属性（从 m:r 自身和父容器 m:ctrlPr 继承）
-                boolean wItalic = hasWrPrBoldOrItalicOrCtrlPr(el, "i");  // <w:i/>
-                boolean wBold = hasWrPrBoldOrItalicOrCtrlPr(el, "b");    // <w:b/>
+                // 只把 Word 的显式西文格式视为用户设置的样式。
+                // w:iCs/w:bCs 是复杂脚本格式，Word 可能把它写在直体拉丁文本（如 real/ideal）上，
+                // 不能据此把拉丁公式文本渲染为斜体/粗体。
+                boolean wItalic = hasWrPrFormattingOrCtrlPr(el, "i");
+                boolean wBold = hasWrPrFormattingOrCtrlPr(el, "b");
                 // 读取 w:rPr/w:rFonts 字体信息（含 m:ctrlPr 继承）
                 String fontFamily = getWrPrFontFamilyOrCtrlPr(el);
 
@@ -67,55 +70,18 @@ public final class OmmlToMathmlConverter {
                     // m:nor → 用文字格式，但 m:sty=i/bi 仍可覆盖为斜体，m:sty=b/bi/bs 覆盖为粗体
                     effectiveItalic = wItalic || styItalic;
                     effectiveBold = wBold || styBold;
-                } else if (styItalic || styBold) {
-                    // m:sty 明确指定了斜体或粗体（无 m:nor 时）
+                } else if (styVal != null) {
+                    // m:sty 明确指定样式（包括 p=直体）
                     effectiveItalic = styItalic;
                     effectiveBold = styBold;
                 } else {
-                    // 无 m:nor 且无 m:sty 覆盖 → 默认数学斜体，粗体看 w:b
-                    effectiveItalic = true;
+                    // 没有显式斜体声明时保持直体。MathML 的单字符 <mi> 默认会斜体，
+                    // 因此后续必须输出 mathvariant="normal" 来覆盖浏览器默认行为。
+                    effectiveItalic = wItalic;
                     effectiveBold = wBold;
                 }
 
-                // 组装 MathML <mi> 及其属性
-                // MathML 规范：<mi> 单字符默认斜体，多字符默认直立。
-                // 多字符斜体需拆分为逐个单字符 <mi> 确保跨浏览器正确渲染。
-                String miAttr;
-                String miStyle;
-                if (effectiveBold && effectiveItalic) {
-                    miAttr = " mathvariant=\"bold-italic\"";
-                    miStyle = null;
-                } else if (effectiveBold && !effectiveItalic) {
-                    miAttr = " mathvariant=\"normal\"";
-                    miStyle = "font-weight:bold";
-                } else if (effectiveItalic) {
-                    miAttr = "";
-                    miStyle = null;
-                } else {
-                    miAttr = " mathvariant=\"normal\"";
-                    miStyle = null;
-                }
-                // font-family
-                StringBuilder stylePart = new StringBuilder();
-                if (miStyle != null) stylePart.append(miStyle);
-                if (fontFamily != null) {
-                    if (stylePart.length() > 0) stylePart.append(";");
-                    stylePart.append("font-family:").append(fontFamily);
-                }
-                String fullStyle = stylePart.length() > 0 ? " style=\"" + stylePart + "\"" : "";
-
-                // 斜体多字符：拆分为逐个单字符 <mi>（MathML 单字符 <mi> 默认斜体）
-                if (effectiveItalic && text.length() > 1) {
-                    for (int k = 0; k < text.length(); k++) {
-                        char ch = text.charAt(k);
-                        sb.append("<mi").append(miAttr).append(fullStyle).append(">")
-                           .append(ch == ' ' ? " " : String.valueOf(ch))
-                           .append("</mi>");
-                    }
-                } else {
-                    sb.append("<mi").append(miAttr).append(fullStyle).append(">")
-                       .append(text).append("</mi>");
-                }
+                appendStyledIdentifiers(sb, text, effectiveItalic, effectiveBold, fontFamily);
             }
             return;
         }
@@ -216,9 +182,14 @@ public final class OmmlToMathmlConverter {
                     if (v != null && !v.isEmpty()) close = v;
                 }
             }
-            sb.append("<mo>").append(escapeXml(open)).append("</mo>");
+            // m:dPr/m:ctrlPr 的 w:i 是公式对象的控制格式，不表示括号、竖线等
+            // 定界符本身需要倾斜。定界符始终保持直体，仅继承字体和粗体。
+            Element delimiterWrPr = getCtrlPrWrPr(dPr);
+            boolean delimiterBold = isWrPrPropertyEnabled(delimiterWrPr, "b");
+            String delimiterFont = delimiterWrPr != null ? getFontFamilyFromWrPr(delimiterWrPr) : null;
+            appendStyledOperator(sb, open, false, delimiterBold, delimiterFont);
             if (findChild(el, "e") != null) convertChildren(findChild(el, "e"), sb);
-            sb.append("<mo>").append(escapeXml(close)).append("</mo>");
+            appendStyledOperator(sb, close, false, delimiterBold, delimiterFont);
             sb.append("</mrow>");
             return;
         }
@@ -315,34 +286,30 @@ public final class OmmlToMathmlConverter {
     }
 
     /**
-     * 检查 m:r 元素中 w:rPr 是否设置了斜体（w:i）。
-     * @return true 如果 w:i 存在且 val 不为 "0"/"false"
-     */
-    /**
-     * 检查 m:r 元素中 w:rPr 里 w:i 或 w:b 是否启用，若 m:r 自身未设置则回退到父容器的 m:ctrlPr。
-     * @param rEl   m:r 元素
-     * @param prop  "i" 或 "b"
+     * 检查 m:r 元素中 w:rPr 的一组等价格式属性是否启用；若 m:r 自身未设置，
+     * 则回退到父容器的 m:ctrlPr。
+     * @param rEl  m:r 元素
+     * @param props 等价属性名，例如 "i"、"iCs"
      * @return true 如果属性存在且不为 0/false
      */
-    private static boolean hasWrPrBoldOrItalicOrCtrlPr(Element rEl, String prop) {
+    private static boolean hasWrPrFormattingOrCtrlPr(Element rEl, String... props) {
         // 先检查 m:r 自身的 w:rPr
         NodeList wrPrNodes = rEl.getElementsByTagNameNS(W, "rPr");
         Element wrPr = wrPrNodes.getLength() > 0 ? (Element) wrPrNodes.item(0) : null;
         if (wrPr != null) {
-            NodeList nodes = wrPr.getElementsByTagNameNS(W, prop);
-            if (nodes.getLength() > 0) {
-                String val = ((Element) nodes.item(0)).getAttributeNS(W, "val");
-                return val.isEmpty() || !("0".equals(val) || "false".equals(val));
+            Boolean value = getEnabledWrPrProperty(wrPr, props);
+            if (value != null) {
+                return value;
             }
         }
         // 回退到父容器（m:num/m:den/m:e/m:sup/m:sub等）的 m:ctrlPr/w:rPr
-        return parentCtrlPrHasProp(rEl, prop);
+        return parentCtrlPrHasProp(rEl, props);
     }
 
     /**
      * 检查父容器中 m:ctrlPr/w:rPr 是否包含指定属性。
      */
-    private static boolean parentCtrlPrHasProp(Element rEl, String prop) {
+    private static boolean parentCtrlPrHasProp(Element rEl, String... props) {
         Node parent = rEl.getParentNode();
         if (!(parent instanceof Element)) return false;
         Element parentEl = (Element) parent;
@@ -353,10 +320,131 @@ public final class OmmlToMathmlConverter {
         NodeList wrPrNodes = ctrlPr.getElementsByTagNameNS(W, "rPr");
         if (wrPrNodes.getLength() == 0) return false;
         Element wrPr = (Element) wrPrNodes.item(0);
-        NodeList nodes = wrPr.getElementsByTagNameNS(W, prop);
-        if (nodes.getLength() == 0) return false;
-        String val = ((Element) nodes.item(0)).getAttributeNS(W, "val");
-        return val.isEmpty() || !("0".equals(val) || "false".equals(val));
+        Boolean value = getEnabledWrPrProperty(wrPr, props);
+        return Boolean.TRUE.equals(value);
+    }
+
+    /**
+     * 读取一组等价的 Word run 属性，例如西文字体的 w:i 和复杂脚本的 w:iCs。
+     * 返回 null 表示这些属性均未声明；任一属性启用则返回 true。
+     */
+    private static Boolean getEnabledWrPrProperty(Element wrPr, String... props) {
+        boolean declared = false;
+        for (String prop : props) {
+            NodeList nodes = wrPr.getElementsByTagNameNS(W, prop);
+            if (nodes.getLength() == 0) continue;
+            declared = true;
+            String val = ((Element) nodes.item(0)).getAttributeNS(W, "val");
+            if (val.isEmpty() || !("0".equalsIgnoreCase(val)
+                    || "false".equalsIgnoreCase(val)
+                    || "off".equalsIgnoreCase(val))) {
+                return true;
+            }
+        }
+        return declared ? Boolean.FALSE : null;
+    }
+
+    /**
+     * 判断 w:rPr 中的单个布尔格式属性是否显式启用。
+     */
+    private static boolean isWrPrPropertyEnabled(Element wrPr, String prop) {
+        if (wrPr == null) return false;
+        return Boolean.TRUE.equals(getEnabledWrPrProperty(wrPr, prop));
+    }
+
+    /**
+     * 获取公式对象属性（如 m:dPr）中的 m:ctrlPr/w:rPr。
+     */
+    private static Element getCtrlPrWrPr(Element propertyEl) {
+        if (propertyEl == null) return null;
+        Element ctrlPr = findChild(propertyEl, "ctrlPr");
+        if (ctrlPr == null) return null;
+        NodeList wrPrNodes = ctrlPr.getElementsByTagNameNS(W, "rPr");
+        return wrPrNodes.getLength() > 0 ? (Element) wrPrNodes.item(0) : null;
+    }
+
+    /**
+     * 输出带有显式 Word 字体格式的 MathML 运算符/定界符。
+     */
+    private static void appendStyledOperator(StringBuilder sb, String text,
+                                             boolean italic, boolean bold, String fontFamily) {
+        StringBuilder style = new StringBuilder();
+        if (bold && italic) {
+            style.append("font-weight:bold;font-style:italic");
+        } else if (bold) {
+            style.append("font-weight:bold");
+        } else if (italic) {
+            style.append("font-style:italic");
+        }
+        if (fontFamily != null) {
+            if (style.length() > 0) style.append(";");
+            style.append("font-family:").append(fontFamily);
+        }
+
+        // mathvariant=normal 防止浏览器将字符替换为数学专用字形，确保 Word 字体生效。
+        sb.append("<mo mathvariant=\"normal\"");
+        if (style.length() > 0) {
+            sb.append(" style=\"").append(style).append("\"");
+        }
+        sb.append(">").append(escapeXml(text)).append("</mo>");
+    }
+
+    /**
+     * 输出公式文本。Word 会把容器 ctrlPr 的斜体格式附加到子运行，但该格式不能
+     * 应用于运行中混排的括号、斜杠和竖线等定界符。
+     */
+    private static void appendStyledIdentifiers(StringBuilder sb, String text,
+                                                boolean italic, boolean bold, String fontFamily) {
+        int codePointCount = text.codePointCount(0, text.length());
+        boolean split = italic && (codePointCount > 1 || containsUprightDelimiter(text));
+        if (!split) {
+            appendStyledIdentifier(sb, text, italic && !containsUprightDelimiter(text), bold, fontFamily);
+            return;
+        }
+
+        text.codePoints().forEach(codePoint -> appendStyledIdentifier(
+                sb,
+                new String(Character.toChars(codePoint)),
+                !isUprightDelimiter(codePoint),
+                bold,
+                fontFamily));
+    }
+
+    private static void appendStyledIdentifier(StringBuilder sb, String text,
+                                               boolean italic, boolean bold, String fontFamily) {
+        StringBuilder style = new StringBuilder();
+        if (bold) style.append("font-weight:bold");
+        if (italic) {
+            if (style.length() > 0) style.append(";");
+            style.append("font-style:italic");
+        }
+        if (fontFamily != null) {
+            if (style.length() > 0) style.append(";");
+            style.append("font-family:").append(fontFamily);
+        }
+
+        // mathvariant=normal 防止浏览器自动替换数学字形，字体和倾斜均由 CSS 控制。
+        sb.append("<mi mathvariant=\"normal\"");
+        if (style.length() > 0) sb.append(" style=\"").append(style).append("\"");
+        sb.append(">").append(escapeXml(text)).append("</mi>");
+    }
+
+    private static boolean containsUprightDelimiter(String text) {
+        return text.codePoints().anyMatch(OmmlToMathmlConverter::isUprightDelimiter);
+    }
+
+    private static boolean isUprightDelimiter(int codePoint) {
+        return switch (codePoint) {
+            case '/', '\\', '|', '(', ')', '[', ']', '{', '}', '<', '>',
+                    '\u2016', '\u2045', '\u2046', '\u2215', '\u2223', '\u2225',
+                    '\u2308', '\u2309', '\u230A', '\u230B', '\u2329', '\u232A',
+                    '\u27E8', '\u27E9', '\u27EA', '\u27EB',
+                    '\u3010', '\u3011', '\u3014', '\u3015', '\u3016', '\u3017',
+                    '\u3018', '\u3019', '\u301A', '\u301B',
+                    '\uFF08', '\uFF09', '\uFF0F', '\uFF3B', '\uFF3D',
+                    '\uFF5B', '\uFF5C', '\uFF5D' -> true;
+            default -> false;
+        };
     }
 
     /**
@@ -467,9 +555,12 @@ public final class OmmlToMathmlConverter {
         NodeList rFontsNodes = wrPr.getElementsByTagNameNS(W, "rFonts");
         if (rFontsNodes.getLength() == 0) return null;
         Element rFonts = (Element) rFontsNodes.item(0);
-        // 优先拉丁字体：ascii > hAnsi
+        // 优先拉丁/复杂脚本字体：ascii > hAnsi > cs。
+        // Word 公式经常只写 cs（例如 Times New Roman）和 eastAsia（例如宋体）；
+        // 如果跳过 cs，拉丁字符会被错误地渲染成 eastAsia 字体。
         String latin = getNonEmptyAttr(rFonts, "ascii");
         if (latin == null) latin = getNonEmptyAttr(rFonts, "hAnsi");
+        if (latin == null) latin = getNonEmptyAttr(rFonts, "cs");
         // 东亚字体作为后备
         String ea = getNonEmptyAttr(rFonts, "eastAsia");
         if (latin != null && ea != null) {
