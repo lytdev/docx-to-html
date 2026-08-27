@@ -14,8 +14,8 @@ class CliConvertTest {
   @Test
   void testConvert() throws IOException {
     boolean keepTemp = false;
-    Path inputFile = Paths.get("E:\\_tmp\\煤矿地质（宏）123.docx");
-    Path outputFile = Paths.get("E:\\_tmp\\煤矿地质（宏）123.html");
+    Path inputFile = Paths.get("E:\\_tmp\\煤矿地质（宏）0827.docx");
+    Path outputFile = Paths.get("E:\\_tmp\\煤矿地质（宏）0827.html");
     // Build resolver — base64 by default, OSS if configured
     cn.p4u.smart.renderer.Image2Base64Resolver resolver = new cn.p4u.smart.renderer.Image2Base64Resolver();
     // 构建转换配置，extractedDir 设为 null（由转换器内部自动创建）
