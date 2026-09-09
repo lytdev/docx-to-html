@@ -3,8 +3,6 @@ package cn.p4u.smart.parser;
 import cn.p4u.smart.model.StyleDef;
 import org.w3c.dom.*;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Logger;
@@ -89,20 +87,8 @@ public final class StylesParser {
             return new StylesResult(Collections.<String, StyleDef>emptyMap(), null, null, null);
         }
         try {
-            // 构建 DOM 解析器，启用命名空间支持以便用 getElementsByTagNameNS 精确查找元素
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            // 安全防护：禁止 DOCTYPE 声明，防止 XXE 攻击
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
-            // 安全防护：设置空 EntityResolver，阻止外部实体解析
-            builder.setEntityResolver(new org.xml.sax.EntityResolver() {
-                @Override
-                public org.xml.sax.InputSource resolveEntity(String publicId, String systemId) {
-                    return new org.xml.sax.InputSource(new StringReader(""));
-                }
-            });
-            Document doc = builder.parse(stylesFile.toFile());
+            // 由统一工厂完成命名空间和 XXE 防护配置。
+            Document doc = SecureXmlDocuments.parse(stylesFile);
 
             HashMap<String, StyleDef> styles = new HashMap<String, StyleDef>();
 

@@ -1,11 +1,12 @@
 package cn.p4u.smart.integration;
 
 import cn.p4u.smart.converter.ConversionConfig;
-import cn.p4u.smart.converter.ConversionResult;
 import cn.p4u.smart.converter.DocxConverter;
 import cn.p4u.smart.util.TestDocxBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,8 +16,9 @@ class FullPipelineTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocument(bodyXml);
             Path docxPath = builder.build();
-            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.defaults());
-            return result.html();
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                return DocxConverter.convert(docxStream, ConversionConfig.defaults());
+            }
         }
     }
 
@@ -24,8 +26,9 @@ class FullPipelineTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocumentRels(relsXml).addDocument(bodyXml);
             Path docxPath = builder.build();
-            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.defaults());
-            return result.html();
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                return DocxConverter.convert(docxStream, ConversionConfig.defaults());
+            }
         }
     }
 
@@ -186,8 +189,10 @@ class FullPipelineTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addStyles(stylesXml).addTheme(themeXml).addDocument(bodyXml);
             Path docxPath = builder.build();
-            ConversionResult result = DocxConverter.convert(docxPath, ConversionConfig.defaults());
-            String html = result.html();
+            String html;
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                html = DocxConverter.convert(docxStream, ConversionConfig.defaults());
+            }
 
             assertTrue(html.contains("<h1"), "Expected <h1> for heading, got: " + html);
             assertTrue(html.contains("Title"), "Expected 'Title', got: " + html);

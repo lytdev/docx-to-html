@@ -4,8 +4,6 @@ import cn.p4u.smart.DocxConversionException;
 import cn.p4u.smart.model.*;
 import org.w3c.dom.*;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -120,19 +118,8 @@ public final class DocumentParser {
             throw new DocxConversionException("document.xml not found in extracted directory");
         }
         try {
-            // 配置安全的 DOM 解析器：禁止 DOCTYPE 声明以防 XXE 攻击
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
-            // 设置空 EntityResolver，阻止外部实体解析
-            builder.setEntityResolver(new org.xml.sax.EntityResolver() {
-                @Override
-                public org.xml.sax.InputSource resolveEntity(String publicId, String systemId) {
-                    return new org.xml.sax.InputSource(new StringReader(""));
-                }
-            });
-            org.w3c.dom.Document doc = builder.parse(docFile.toFile());
+            // 所有 OOXML 入口统一使用安全工厂，避免某个解析器漏配 XXE 防护。
+            org.w3c.dom.Document doc = SecureXmlDocuments.parse(docFile);
 
             // 查找 w:body 元素，不存在则返回空文档模型
             NodeList bodyNodes = doc.getElementsByTagNameNS(W, "body");

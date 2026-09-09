@@ -10,7 +10,7 @@ import java.util.Objects;
  * <p>
  * 主要使用场景：DocumentParser 解析 w:drawing / v:imagedata 时构建 ImageElement；
  * HtmlRenderer 根据配置将其渲染为 base64 内嵌的 &lt;img&gt; 或外部链接的 &lt;img&gt;；
- * 对于 WMF/EMF 格式，HtmlRenderer 通过 WmfConverter 自动转换为 PNG。
+ * 对于 WMF/EMF 格式，HtmlRenderer 按 ConversionConfig 中的策略通过 WmfConverter 转换为 PNG。
  */
 public final class ImageElement implements ParagraphElement {
 

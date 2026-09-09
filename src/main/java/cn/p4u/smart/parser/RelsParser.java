@@ -1,6 +1,5 @@
 package cn.p4u.smart.parser;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Logger;
@@ -98,21 +97,8 @@ public final class RelsParser {
             return Collections.emptyMap();
         }
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            // 禁止 DOCTYPE 声明，防止 XXE 攻击
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            // 启用安全处理，限制 XML 解析的资源消耗
-            factory.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", true);
-            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
-            // 设置空 EntityResolver，阻止外部实体解析，进一步防御 XXE
-            builder.setEntityResolver(new org.xml.sax.EntityResolver() {
-                @Override
-                public org.xml.sax.InputSource resolveEntity(String publicId, String systemId) {
-                    return new org.xml.sax.InputSource(new java.io.StringReader(""));
-                }
-            });
-            Document doc = builder.parse(relsFile.toFile());
+            // 由统一工厂完成命名空间和 XXE 防护配置。
+            Document doc = SecureXmlDocuments.parse(relsFile);
 
             Map<String, Rel> rels = new HashMap<String, Rel>();
             // 提取所有 <Relationship> 元素

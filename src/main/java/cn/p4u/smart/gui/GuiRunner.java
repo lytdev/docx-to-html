@@ -1,7 +1,6 @@
 package cn.p4u.smart.gui;
 
 import cn.p4u.smart.converter.ConversionConfig;
-import cn.p4u.smart.converter.ConversionResult;
 import cn.p4u.smart.converter.DocxConverter;
 import java.nio.file.Files;
 
@@ -11,6 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -157,10 +157,12 @@ public class GuiRunner extends JFrame {
         statusLabel.setText("转换中...");
         statusLabel.setForeground(UIManager.getColor("Label.foreground"));
 
-        SwingWorker<ConversionResult, Object> worker = new SwingWorker<ConversionResult, Object>() {
+        SwingWorker<String, Object> worker = new SwingWorker<String, Object>() {
             @Override
-            protected ConversionResult doInBackground() throws Exception {
-                return DocxConverter.convert(selectedFile, ConversionConfig.defaults());
+            protected String doInBackground() throws Exception {
+                try (InputStream docxStream = Files.newInputStream(selectedFile)) {
+                    return DocxConverter.convert(docxStream, ConversionConfig.defaults());
+                }
             }
 
             @Override
@@ -169,9 +171,9 @@ public class GuiRunner extends JFrame {
                 browseButton.setEnabled(true);
 
                 try {
-                    ConversionResult result = get();
+                    String html = get();
                     Path outputPath = deriveOutputPath(selectedFile);
-                    Files.writeString(outputPath, result.html());
+                    Files.writeString(outputPath, html);
                     showSuccessDialog(outputPath);
                     convertButton.setEnabled(false);
                     statusLabel.setText(" ");

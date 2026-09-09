@@ -12,7 +12,6 @@ export JAVA_HOME=/c/DevRepo/jdk/dragonwell-21.0.6.0.6+7-GA
 - **Build:** `mvn compile`
 - **All tests:** `mvn test`
 - **Single test class:** `mvn test -Dtest=DocumentParserTest`
-- **Run CLI:** `mvn exec:java -Dexec.mainClass="cn.p4u.smart.cli.CliRunner" -Dexec.args="input.docx -o output.html"`
 
 ## JDK 21
 
@@ -27,7 +26,7 @@ Three-phase pipeline where each stage produces a standalone, testable output:
           (unzip)         (XML→model)      (model→HTML)
 ```
 
-**High-level entry point:** `DocxConverter.convert(Path, ConversionConfig)` chains all three stages. The CLI (`CliRunner`) is a thin picocli wrapper around it.
+**High-level entry point:** `DocxConverter.convert(InputStream, ConversionConfig)` chains all three stages and returns the HTML string. `ConversionConfig.tmpDir()` selects the temporary-directory root, and `ExtractedDocx` automatically cleans the unique generated child. Prefer `ConversionConfig.builder()` when several optional settings are needed.
 
 **Style resolution (DocumentParser):** Two-phase at parse time — first `mergeWithParents()` walks `basedOn` chains, then `resolveThemeInStyles()` replaces all theme references (fonts, colors) with concrete values. `docDefaults` are injected as a synthetic base style for all root styles. The renderer receives fully-resolved styles — it never looks up themes or style chains.
 
@@ -100,7 +99,7 @@ DocumentModel
 **Image handling (three classes):**
 - `DocumentParser` resolves references via `RelsParser`, produces `ImageElement`
 - `ImageHandler` converts to base64 data-URI or copies to output dir (with path-traversal validation)
-- `WmfConverter` converts WMF/EMF to PNG: tries ImageMagick (configurable via `docx2html.imagemagick.path` system property) → PowerShell+System.Drawing → none
+- `WmfConverter` converts WMF/EMF to PNG according to `ConversionConfig.wmfStrategy()`: `AUTO`, `IMAGEMAGICK`, `POWERSHELL`, or `NONE`. `ConversionConfig.imageMagickPath()` selects the ImageMagick executable per conversion; the legacy `docx2html.imagemagick.path` system property remains a fallback.
 
 ## Critical DOM Traversal Pattern
 
@@ -141,9 +140,8 @@ All XML parsers must set `disallow-doctype-decl=true` and provide a no-op `Entit
 
 ## Dependencies
 
-Three runtime dependencies (intentionally minimal — zero XML/HTML/image-processing libraries):
-- **picocli 4.7.6** — CLI argument parsing
-- **commons-io 2.18.0** — `FileUtils.deleteDirectory()` in cleanup
+One direct runtime dependency:
+- **aliyun-sdk-oss 3.17.4** — Aliyun OSS image resolver implementation
 
 One test dependency:
 - **JUnit Jupiter 5.11.4**

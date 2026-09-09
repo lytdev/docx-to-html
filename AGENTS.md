@@ -12,7 +12,6 @@ export JAVA_HOME=/c/DevRepo/jdk/dragonwell-21.0.6.0.6+7-GA
 - **Build:** `mvn compile`
 - **All tests:** `mvn test`
 - **Single test class:** `mvn test -Dtest=DocumentParserTest`
-- **Run CLI:** `mvn exec:java -Dexec.mainClass="cn.p4u.smart.cli.CliRunner" -Dexec.args="input.docx -o output.html"`
 - **Run Swing GUI:** `mvn exec:java -Dexec.mainClass="cn.p4u.smart.gui.GuiRunner"`
 - **Build Windows app image:** `build-exe.bat` (or `mvn -Pnative package` with JDK 21 configured)
 
@@ -35,7 +34,9 @@ Three-phase pipeline where each stage produces a standalone, testable output:
           (unzip)         (XML→model)      (model→HTML)
 ```
 
-**High-level entry point:** `DocxConverter.convert(Path, ConversionConfig)` chains all three stages. The CLI (`CliRunner`) is a thin picocli wrapper around it.
+**High-level entry point:** `DocxConverter.convert(InputStream, ConversionConfig)` chains all three stages and returns the HTML string. Convenience overloads accept an `ImageUriResolver` directly or use the default Base64 resolver. `ConversionConfig.tmpDir()` selects a temporary-directory root; each extraction uses a unique `docx2html-*` child. The converter consumes but does not close the caller-owned stream. `ExtractedDocx` makes the generated child AutoCloseable, so the pipeline cleans it on success and failure. Prefer `ConversionConfig.builder()` when several optional settings are needed.
+
+**Refactoring patterns:** `DocxConverter` and `WmfConverter` are facades; `ConversionConfig.Builder` handles optional parameters; `ImageUriResolver` and `WmfRasterizer` are strategies; `WmfRasterizerFactory` selects WMF implementations; `MathHtmlRenderer` is an ordered responsibility chain; `SecureXmlDocuments` centralizes secure DOM construction. See `DESIGN_PATTERNS.md` for the beginner-oriented guide.
 
 **Style resolution (DocumentParser):** Two-phase at parse time — first `mergeWithParents()` walks `basedOn` chains, then `resolveThemeInStyles()` replaces all theme references (fonts, colors) with concrete values. `docDefaults` are injected as a synthetic base style for all root styles. The renderer receives fully-resolved styles — it never looks up themes or style chains.
 
@@ -101,6 +102,8 @@ DocumentModel
 3. `latexRenderUrl` configured → online service URL
 4. Fallback → `<span class="math">` with `data-latex` for frontend MathJax pickup
 
+The cascade is implemented by `MathHtmlRenderer` as an ordered chain. Keep the handler order stable unless changing output behavior is explicitly requested.
+
 **Shapes:** Inline SVG. `presetToSvgPath()` maps 15 known presets; unknown → `<rect>`. Group shapes recurse children with `chOff`/`chExt` coordinate scaling.
 
 **Font-family construction:** When Latin and East-Asian fonts differ, `HtmlRenderer.renderTextRun()` splits text into CJK and non-CJK Unicode segments. CJK segments put the East-Asian font first; non-CJK segments put the Latin font first. Duplicates are omitted, and a single available font is used directly.
@@ -110,9 +113,9 @@ DocumentModel
 - `ImageUriResolver` is the pluggable rendering boundary; `ConversionConfig.defaults()` uses `Image2Base64Resolver`
 - `Image2OssResolver` uploads images to Aliyun OSS and returns HTTPS URLs; callers that construct it own its lifecycle and must close it
 - `ImageHandler` now only delegates WMF/EMF format detection to `WmfConverter`; it no longer encodes or copies images
-- `WmfConverter` converts WMF/EMF to PNG: tries ImageMagick (configurable via `docx2html.imagemagick.path` system property) → PowerShell+System.Drawing → none
+- `WmfConverter` converts WMF/EMF to PNG according to `ConversionConfig.wmfStrategy()`: `AUTO`, `IMAGEMAGICK`, `POWERSHELL`, or `NONE`. `ConversionConfig.imageMagickPath()` selects the ImageMagick executable per conversion; the legacy `docx2html.imagemagick.path` system property remains a fallback.
 
-The CLI selects image behavior with `--image-resolver=base64|oss`. OSS mode also requires `--oss-endpoint`, `--oss-bucket`, `--oss-access-key`, and `--oss-secret-key`; `--oss-base-path` is optional. Do not restore the removed `ImageMode`, `imageMode()`, or `imageOutputDir()` APIs.
+Applications select image behavior by passing an `ImageUriResolver` to `DocxConverter.convert(...)` or through `ConversionConfig`. Do not restore the removed `ImageMode`, `imageMode()`, or `imageOutputDir()` APIs.
 
 ## Critical DOM Traversal Pattern
 
@@ -145,13 +148,11 @@ Use `isBoolPropEnabled()` to evaluate an inline property; `hasElement()` alone i
 
 ## Security
 
-All XML parsers must set `disallow-doctype-decl=true`; new XML entry points should also install a no-op `EntityResolver` to prevent XXE. `DocumentParser`, `StylesParser`, `ThemeParser`, and `RelsParser` currently do both; `NumberingParser` currently sets the feature only. `DocxExtractor` validates zip entry paths against the temp directory root to prevent zip-slip.
+All OOXML DOM parsing must go through `SecureXmlDocuments.parse()`, which disables DOCTYPE, external entities, external DTDs, and external schemas. `DocxExtractor` validates zip entry paths against the temp directory root to prevent zip-slip.
 
 ## Dependencies
 
-Three direct runtime dependencies:
-- **picocli 4.7.6** — CLI argument parsing
-- **commons-io 2.18.0** — `FileUtils.deleteDirectory()` in cleanup
+One direct runtime dependency:
 - **aliyun-sdk-oss 3.17.4** — Aliyun OSS image resolver implementation
 
 One test dependency:
@@ -174,4 +175,4 @@ export JAVA_HOME=/c/DevRepo/jdk/dragonwell-21.0.6.0.6+7-GA
 mvn -Pnative package
 ```
 
-On the repository's Windows setup, prefer `build-exe.bat`; it supplies the Maven and jpackage paths explicitly. The output is `target/dist/docx2html/`, containing `docx2html.exe` and a bundled runtime. The packaged application starts `GuiRunner`; the ordinary jar manifest starts `CliRunner`.
+On the repository's Windows setup, prefer `build-exe.bat`; it supplies the Maven and jpackage paths explicitly. The output is `target/dist/docx2html/`, containing `docx2html.exe` and a bundled runtime. The packaged application starts `GuiRunner`; the ordinary jar is a library and has no main class.

@@ -2,7 +2,6 @@ package cn.p4u.smart.parser;
 
 import org.w3c.dom.*;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -48,13 +47,8 @@ public final class NumberingParser {
             return Collections.emptyMap();
         }
         try {
-            // 构建 DOM 解析器，启用命名空间支持以正确使用 getElementsByTagNameNS
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            // 禁止 DOCTYPE 声明，防止 XXE 攻击
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(numberingFile.toFile());
+            // 由统一工厂完成命名空间和 XXE 防护配置。
+            Document doc = SecureXmlDocuments.parse(numberingFile);
 
             // 第一步：构建 abstractNumId → numFmt 的映射
             // abstractNum 定义了编号的抽象格式（如数字、圆点等），每个 abstractNum 可有多级列表（lvl），

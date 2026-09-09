@@ -5,8 +5,6 @@ import cn.p4u.smart.model.ThemeDef.ColorScheme;
 import cn.p4u.smart.model.ThemeDef.FontScheme;
 import org.w3c.dom.*;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -46,19 +44,8 @@ public final class ThemeParser {
             return new ThemeDef(null, null);
         }
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            // 禁止 DOCTYPE 声明，防止 XXE 攻击
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
-            // 设置空的 EntityResolver，阻断外部实体解析
-            builder.setEntityResolver(new org.xml.sax.EntityResolver() {
-                @Override
-                public org.xml.sax.InputSource resolveEntity(String publicId, String systemId) {
-                    return new org.xml.sax.InputSource(new StringReader(""));
-                }
-            });
-            Document doc = builder.parse(themeFile.toFile());
+            // 由统一工厂完成命名空间和 XXE 防护配置。
+            Document doc = SecureXmlDocuments.parse(themeFile);
 
             // 分别解析颜色方案和字体方案
             ColorScheme colors = parseColorScheme(doc);

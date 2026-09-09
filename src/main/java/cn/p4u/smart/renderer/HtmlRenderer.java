@@ -3,7 +3,6 @@ package cn.p4u.smart.renderer;
 import cn.p4u.smart.converter.ConversionConfig;
 import cn.p4u.smart.model.*;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.util.*;
@@ -45,6 +44,13 @@ public final class HtmlRenderer {
      * @return 完整的 HTML 文档字符串
      */
     public static String render(DocumentModel model, ConversionConfig config) {
+        return render(model, config, null);
+    }
+
+    /**
+     * 使用指定资源根目录渲染文档模型。资源根目录由高层转换管线管理。
+     */
+    public static String render(DocumentModel model, ConversionConfig config, Path resourceRoot) {
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n<html>\n<head><meta charset=\"UTF-8\"></head>\n<body>\n");
         List<ContentBlock> blocks = model.content();
@@ -55,11 +61,12 @@ public final class HtmlRenderer {
                 ParagraphBlock para = (ParagraphBlock) block;
                 // 当前段落属于列表（有 numId 且编号格式存在）时，进入列表分组渲染
                 if (para.numId() != null && numFmts.containsKey(para.numId())) {
-                    i = renderListGroup(sb, blocks, i, para.numId(), numFmts, config, model.styles());
+                    i = renderListGroup(sb, blocks, i, para.numId(), numFmts,
+                            config, model.styles(), resourceRoot);
                     continue;
                 }
             }
-            renderBlock(sb, block, config, model.styles());
+            renderBlock(sb, block, config, model.styles(), resourceRoot);
         }
         sb.append("</body>\n</html>");
         return sb.toString();
@@ -82,7 +89,8 @@ public final class HtmlRenderer {
      */
     private static int renderListGroup(StringBuilder sb, List<ContentBlock> blocks, int startIdx,
                                         String numId, Map<String, String> numFmts,
-                                        ConversionConfig config, Map<String, StyleDef> styles) {
+                                        ConversionConfig config, Map<String, StyleDef> styles,
+                                        Path resourceRoot) {
         String fmt = numFmts.get(numId);
         // "bullet" 格式使用 ul，其余（decimal、lowerLetter 等）使用 ol
         boolean ordered = !"bullet".equals(fmt);
@@ -97,7 +105,7 @@ public final class HtmlRenderer {
             ParagraphBlock para = (ParagraphBlock) block;
             if (!numId.equals(para.numId())) break;
             // 将当前段落渲染为列表项
-            renderListItem(sb, para, config, styles);
+            renderListItem(sb, para, config, styles, resourceRoot);
             i++;
         }
         sb.append("</").append(listTag).append(">\n");
@@ -116,7 +124,8 @@ public final class HtmlRenderer {
      * @param styles 样式定义映射
      */
     private static void renderListItem(StringBuilder sb, ParagraphBlock para,
-                                        ConversionConfig config, Map<String, StyleDef> styles) {
+                                        ConversionConfig config, Map<String, StyleDef> styles,
+                                        Path resourceRoot) {
         String styleAttr = StyleMapper.paragraphStyle(para);
         String paraFontSize = extractParagraphFontSize(para);
         sb.append("<li");
@@ -132,7 +141,7 @@ public final class HtmlRenderer {
         }
         sb.append(">");
         for (ParagraphElement el : para.elements()) {
-            renderParagraphElement(sb, el, config);
+            renderParagraphElement(sb, el, config, resourceRoot);
         }
         sb.append("</li>\n");
     }
@@ -145,11 +154,12 @@ public final class HtmlRenderer {
      * @param config 转换配置
      * @param styles 样式定义映射
      */
-    private static void renderBlock(StringBuilder sb, ContentBlock block, ConversionConfig config, Map<String, StyleDef> styles) {
+    private static void renderBlock(StringBuilder sb, ContentBlock block, ConversionConfig config,
+                                    Map<String, StyleDef> styles, Path resourceRoot) {
         if (block instanceof ParagraphBlock) {
-            renderParagraph(sb, (ParagraphBlock) block, config, styles);
+            renderParagraph(sb, (ParagraphBlock) block, config, styles, resourceRoot);
         } else if (block instanceof TableBlock) {
-            renderTable(sb, (TableBlock) block, config, styles);
+            renderTable(sb, (TableBlock) block, config, styles, resourceRoot);
         }
     }
 
@@ -164,7 +174,8 @@ public final class HtmlRenderer {
      * @param config 转换配置
      * @param styles 样式定义映射
      */
-    private static void renderParagraph(StringBuilder sb, ParagraphBlock para, ConversionConfig config, Map<String, StyleDef> styles) {
+    private static void renderParagraph(StringBuilder sb, ParagraphBlock para, ConversionConfig config,
+                                        Map<String, StyleDef> styles, Path resourceRoot) {
         // 解析标题级别：如果段落属于标题样式则返回 h1-h6，否则返回 p
         String tag = resolveHeadingTag(para, styles);
         String styleAttr = StyleMapper.paragraphStyle(para);
@@ -184,7 +195,7 @@ public final class HtmlRenderer {
         }
         sb.append(">");
         for (ParagraphElement el : para.elements()) {
-            renderParagraphElement(sb, el, config);
+            renderParagraphElement(sb, el, config, resourceRoot);
         }
         sb.append("</").append(tag).append(">\n");
     }
@@ -341,15 +352,16 @@ public final class HtmlRenderer {
      * @param el     段落元素（文本、超链接、图片、公式或形状）
      * @param config 转换配置
      */
-    private static void renderParagraphElement(StringBuilder sb, ParagraphElement el, ConversionConfig config) {
+    private static void renderParagraphElement(StringBuilder sb, ParagraphElement el,
+                                               ConversionConfig config, Path resourceRoot) {
         if (el instanceof TextRun) {
             renderTextRun(sb, (TextRun) el);
         } else if (el instanceof HyperlinkElement) {
             renderHyperlink(sb, (HyperlinkElement) el);
         } else if (el instanceof ImageElement) {
-            renderImage(sb, (ImageElement) el, config);
+            renderImage(sb, (ImageElement) el, config, resourceRoot);
         } else if (el instanceof MathElement) {
-            renderMath(sb, (MathElement) el, config);
+            renderMath(sb, (MathElement) el, config, resourceRoot);
         } else if (el instanceof ShapeElement) {
             renderShape(sb, (ShapeElement) el);
         }
@@ -488,9 +500,10 @@ public final class HtmlRenderer {
      * @param img    图片元素，包含路径、尺寸、MIME 类型和环绕模式
      * @param config 转换配置
      */
-    private static void renderImage(StringBuilder sb, ImageElement img, ConversionConfig config) {
+    private static void renderImage(StringBuilder sb, ImageElement img,
+                                    ConversionConfig config, Path resourceRoot) {
         sb.append("<img");
-        Path mediaPath = resolveMediaPath(img.mediaPath(), config);
+        Path mediaPath = resolveMediaPath(img.mediaPath(), resourceRoot);
         if (mediaPath == null || !Files.exists(mediaPath)) {
             sb.append("><span style=\"color: #999; font-style: italic;\">[image not found]</span>");
             return;
@@ -505,7 +518,7 @@ public final class HtmlRenderer {
             // Shared pre-step: convert WMF/EMF to PNG before resolving
             try {
                 byte[] raw = Files.readAllBytes(mediaPath);
-                byte[] png = WmfConverter.convertToPng(raw, pxW, pxH);
+                byte[] png = WmfConverter.convertToPng(raw, pxW, pxH, config);
                 if (png != null) {
                     Path tmpFile = Files.createTempFile("wmf2png", ".png");
                     Files.write(tmpFile, png);
@@ -556,44 +569,9 @@ public final class HtmlRenderer {
      * @param math   数学公式元素
      * @param config 转换配置
      */
-    private static void renderMath(StringBuilder sb, MathElement math, ConversionConfig config) {
-        String latex = math.latex();
-        if (math.imagePath() != null) {
-            // 有 VML 备用图片，通过 ImageUriResolver 获取 URI 后嵌入
-            Path imgPath = resolveMediaPath(math.imagePath(), config);
-            try {
-                ImageUriResolver.ResolveResult result = config.imageUriResolver().resolve(imgPath, math.mimeType());
-                sb.append("<img src=\"").append(escapeAttr(result.uri())).append("\" style=\"vertical-align: middle;\"");
-            } catch (IOException e) {
-                sb.append("<img src=\"\" style=\"vertical-align: middle; color: #999; font-style: italic;\" alt=\"[math image resolve failed]\"");
-            }
-            if (latex != null && !latex.isEmpty()) {
-                sb.append(" data-latex=\"").append(escapeAttr(latex)).append("\"");
-            }
-            sb.append(">");
-        } else if (math.mathml() != null && !math.mathml().isEmpty()) {
-            // 无备用图片但有 MathML：直接内嵌 MathML，浏览器原生渲染，无需外部依赖
-            sb.append(math.mathml());
-        } else if (latex != null && !latex.isEmpty()
-                && config.latexRenderUrl() != null) {
-            // 降级：无 MathML 时使用在线 LaTeX 渲染服务
-            String renderUrl = config.latexRenderUrl();
-            try {
-                String encoded = URLEncoder.encode(latex, "UTF-8");
-                String src = renderUrl.replace("{latex}", encoded);
-                sb.append("<img src=\"").append(escapeAttr(src))
-                  .append("\" style=\"vertical-align: middle;\"");
-                sb.append(" alt=\"").append(escapeAttr(latex)).append("\"");
-                sb.append(" data-latex=\"").append(escapeAttr(latex)).append("\">");
-            } catch (java.io.UnsupportedEncodingException e) {
-                sb.append("<span style=\"color: #999;\">[").append(escapeHtml(latex)).append("]</span>");
-            }
-        } else if (latex != null && !latex.isEmpty()) {
-            // 仅有 LaTeX，显示为文本（保留 data-latex 供前端 MathJax 渲染）
-            sb.append("<span data-latex=\"").append(escapeAttr(latex))
-              .append("\" class=\"latex-formula\">")
-              .append(escapeHtml(latex)).append("</span>");
-        }
+    private static void renderMath(StringBuilder sb, MathElement math,
+                                   ConversionConfig config, Path resourceRoot) {
+        MathHtmlRenderer.render(sb, math, config, resourceRoot);
     }
 
     /**
@@ -607,7 +585,8 @@ public final class HtmlRenderer {
      * @param config 转换配置
      * @param styles 样式定义映射
      */
-    private static void renderTable(StringBuilder sb, TableBlock table, ConversionConfig config, Map<String, StyleDef> styles) {
+    private static void renderTable(StringBuilder sb, TableBlock table, ConversionConfig config,
+                                    Map<String, StyleDef> styles, Path resourceRoot) {
         String tableStyle = StyleMapper.tableStyle(table);
         sb.append("<table style=\"").append(tableStyle).append("\">\n");
         for (TableRow row : table.rows()) {
@@ -631,7 +610,7 @@ public final class HtmlRenderer {
                 sb.append(" style=\"").append(cellStyle).append("\">");
                 // 单元格内容由一个或多个段落组成，递归渲染
                 for (ParagraphBlock para : cell.paragraphs()) {
-                    renderParagraph(sb, para, config, styles);
+                    renderParagraph(sb, para, config, styles, resourceRoot);
                 }
                 sb.append("</td>\n");
             }
@@ -646,12 +625,12 @@ public final class HtmlRenderer {
      * <p>媒体路径形如 "media/image1.png"，需要拼接解压目录的 word/ 子路径。
      *
      * @param mediaPath 相对媒体路径（如 "media/image1.png"）
-     * @param config    转换配置，包含解压目录
-     * @return 解析后的绝对路径，若 mediaPath 或 extractedDir 为 null 则返回 null
+     * @param resourceRoot 解压后的资源根目录
+     * @return 解析后的绝对路径，若 mediaPath 或 resourceRoot 为 null 则返回 null
      */
-    private static Path resolveMediaPath(String mediaPath, ConversionConfig config) {
-        if (mediaPath == null || config.extractedDir() == null) return null;
-        return config.extractedDir().resolve("word").resolve(mediaPath);
+    private static Path resolveMediaPath(String mediaPath, Path resourceRoot) {
+        if (mediaPath == null || resourceRoot == null) return null;
+        return resourceRoot.resolve("word").resolve(mediaPath);
     }
 
     /**
@@ -1095,11 +1074,7 @@ public final class HtmlRenderer {
      * @return 转义后的安全文本
      */
     private static String escapeHtml(String text) {
-        return text
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;");
+        return HtmlEscaper.text(text);
     }
 
     /**
@@ -1111,6 +1086,6 @@ public final class HtmlRenderer {
      * @return 转义后的安全属性值
      */
     private static String escapeAttr(String value) {
-        return value.replace("&", "&amp;").replace("\"", "&quot;");
+        return HtmlEscaper.attribute(value);
     }
 }

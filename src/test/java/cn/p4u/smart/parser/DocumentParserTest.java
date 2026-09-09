@@ -5,6 +5,8 @@ import cn.p4u.smart.util.TestDocxBuilder;
 import cn.p4u.smart.extractor.DocxExtractor;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,11 +17,13 @@ class DocumentParserTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocument(bodyXml);
             Path docxPath = builder.build();
-            Path extracted = DocxExtractor.extract(docxPath);
-            try {
-                return DocumentParser.parse(extracted);
-            } finally {
-                DocxExtractor.cleanup(extracted);
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                Path extracted = DocxExtractor.extract(docxStream);
+                try {
+                    return DocumentParser.parse(extracted);
+                } finally {
+                    DocxExtractor.cleanup(extracted);
+                }
             }
         }
     }
@@ -28,11 +32,13 @@ class DocumentParserTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocumentRels(relsXml).addDocument(bodyXml);
             Path docxPath = builder.build();
-            Path extracted = DocxExtractor.extract(docxPath);
-            try {
-                return DocumentParser.parse(extracted);
-            } finally {
-                DocxExtractor.cleanup(extracted);
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                Path extracted = DocxExtractor.extract(docxStream);
+                try {
+                    return DocumentParser.parse(extracted);
+                } finally {
+                    DocxExtractor.cleanup(extracted);
+                }
             }
         }
     }
@@ -41,11 +47,13 @@ class DocumentParserTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocument(bodyXml).addStyles(stylesXml);
             Path docxPath = builder.build();
-            Path extracted = DocxExtractor.extract(docxPath);
-            try {
-                return DocumentParser.parse(extracted);
-            } finally {
-                DocxExtractor.cleanup(extracted);
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                Path extracted = DocxExtractor.extract(docxStream);
+                try {
+                    return DocumentParser.parse(extracted);
+                } finally {
+                    DocxExtractor.cleanup(extracted);
+                }
             }
         }
     }
@@ -402,11 +410,13 @@ class DocumentParserTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addStyles(stylesXml).addDocument(bodyXml);
             Path docxPath = builder.build();
-            Path extracted = DocxExtractor.extract(docxPath);
-            try {
-                return DocumentParser.parse(extracted);
-            } finally {
-                DocxExtractor.cleanup(extracted);
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                Path extracted = DocxExtractor.extract(docxStream);
+                try {
+                    return DocumentParser.parse(extracted);
+                } finally {
+                    DocxExtractor.cleanup(extracted);
+                }
             }
         }
     }
@@ -967,11 +977,13 @@ class DocumentParserTest {
         try (TestDocxBuilder builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addStyles(stylesXml).addTheme(themeXml).addDocument(bodyXml);
             Path docxPath = builder.build();
-            Path extracted = DocxExtractor.extract(docxPath);
-            try {
-                return DocumentParser.parse(extracted);
-            } finally {
-                DocxExtractor.cleanup(extracted);
+            try (InputStream docxStream = Files.newInputStream(docxPath)) {
+                Path extracted = DocxExtractor.extract(docxStream);
+                try {
+                    return DocumentParser.parse(extracted);
+                } finally {
+                    DocxExtractor.cleanup(extracted);
+                }
             }
         }
     }
