@@ -83,21 +83,39 @@ final class FigureCaptionProcessor {
     /**
      * 统一图片语义属性和展示类名。
      *
-     * <p>普通图片满足任一条件即为行内图片：渲染阶段已判定为行内；或者同一父元素下
-     * 存在带可见文字的兄弟元素。公式图片始终使用自己的类型和类名。</p>
+     * <p>只有嵌入型图片与同一父元素下带可见文字的兄弟元素混排时，才识别为行内图片。
+     * 其他普通图片全部识别为块级图片。公式图片始终使用自己的类型和类名。</p>
      */
     private static boolean normalizeImageType(Element image) {
         String before = image.outerHtml();
+        removeFloatStyle(image);
         if ("formula".equals(image.attr("data-type"))) {
+            image.removeAttr("data-docx-embedded");
             image.removeClass("image-block").removeClass("image-inline").removeClass("image-item")
                     .addClass("formula-item").addClass("formula-image");
         } else {
-            boolean inline = image.hasClass("image-inline") || hasTextElementSibling(image);
+            boolean inline = "true".equals(image.attr("data-docx-embedded"))
+                    && hasTextElementSibling(image);
+            image.removeAttr("data-docx-embedded");
             image.attr("data-type", "image");
             image.removeClass("image-block").removeClass("image-inline").removeClass("image-item");
             image.addClass(inline ? "image-inline" : "image-block").addClass("image-item");
         }
         return !before.equals(image.outerHtml());
+    }
+
+    /** 删除图片 style 中的 float 声明，同时保留尺寸、对齐等其他内联样式。 */
+    private static void removeFloatStyle(Element image) {
+        if (!image.hasAttr("style")) return;
+        List<String> retained = new ArrayList<>();
+        for (String declaration : image.attr("style").split(";")) {
+            String trimmed = declaration.trim();
+            if (!trimmed.isEmpty() && !trimmed.matches("(?i)^float\\s*:.*$")) {
+                retained.add(trimmed);
+            }
+        }
+        if (retained.isEmpty()) image.removeAttr("style");
+        else image.attr("style", String.join("; ", retained) + ";");
     }
 
     /** 只检查直接兄弟元素；空标签、纯空格元素和图片自身都不算文字混排。 */

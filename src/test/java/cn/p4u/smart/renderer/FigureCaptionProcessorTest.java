@@ -38,19 +38,25 @@ class FigureCaptionProcessorTest {
     }
 
     @Test
-    void nonTopBottomWrapIsInlineAndTopBottomWrapIsBlock() throws Exception {
+    void allStandaloneImagesAreBlockAndImageFloatIsRemoved() throws Exception {
         try (cn.p4u.smart.util.TestDocxBuilder builder = new cn.p4u.smart.util.TestDocxBuilder()) {
             builder.addContentTypes().addRels()
                     .addDocumentRels("<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/a.png\"/>"
-                            + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/b.png\"/>")
+                            + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/b.png\"/>"
+                            + "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/c.png\"/>")
                     .addMedia("a.png", new byte[]{1}).addMedia("b.png", new byte[]{2})
+                    .addMedia("c.png", new byte[]{3})
                     .addDocument(imageParagraph("rId1", "<wp:wrapSquare wrapText=\"bothSides\"/>")
-                            + imageParagraph("rId2", "<wp:wrapTopAndBottom/>"));
+                            + imageParagraph("rId2", "<wp:wrapTopAndBottom/>")
+                            + embeddedImageParagraph("rId3"));
             try (var input = java.nio.file.Files.newInputStream(builder.build())) {
                 Document result = Jsoup.parse(cn.p4u.smart.converter.DocxConverter.convert(input));
-                assertEquals("image-inline image-item", result.select("img").get(0).className());
+                assertEquals("image-block image-item", result.select("img").get(0).className());
                 assertEquals("image-block image-item", result.select("img").get(1).className());
-                assertEquals(2, result.select("img[data-type=image]").size());
+                assertEquals("image-block image-item", result.select("img").get(2).className());
+                assertEquals(3, result.select("img[data-type=image]").size());
+                assertTrue(result.select("img[style*=float]").isEmpty());
+                assertTrue(result.select("img[data-docx-embedded]").isEmpty());
             }
         }
     }
@@ -59,6 +65,12 @@ class FigureCaptionProcessorTest {
         return "<w:p><w:r><w:drawing><wp:anchor><wp:extent cx=\"9525\" cy=\"9525\"/>"
                 + wrapXml + "<a:graphic><a:graphicData><a:blip r:embed=\"" + relationshipId
                 + "\"/></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>";
+    }
+
+    private String embeddedImageParagraph(String relationshipId) {
+        return "<w:p><w:r><w:drawing><wp:inline><wp:extent cx=\"9525\" cy=\"9525\"/>"
+                + "<a:graphic><a:graphicData><a:blip r:embed=\"" + relationshipId
+                + "\"/></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>";
     }
 
     private Document process(String body) {
@@ -72,7 +84,7 @@ class FigureCaptionProcessorTest {
         assertEquals("100", doc.selectFirst("figure img").attr("width"));
         assertEquals("图3-9　直接接触防护", doc.selectFirst("figcaption").wholeText());
         assertTrue(doc.selectFirst("figcaption").children().isEmpty());
-        assertEquals("image-inline image-item", doc.selectFirst("figure > img").className());
+        assertEquals("image-block image-item", doc.selectFirst("figure > img").className());
     }
 
     @Test
@@ -134,7 +146,8 @@ class FigureCaptionProcessorTest {
 
     @Test
     void preservesInlineImageClassAndRemovesConflictingBlockClass() {
-        Document doc = process("<p>前文<img src='a' class='image-inline image-block'>后文</p>");
+        Document doc = process("<p><span>前文</span><img src='a' data-docx-embedded='true' "
+                + "class='image-inline image-block'><span>后文</span></p>");
         assertEquals("image-inline image-item", doc.selectFirst("img").className());
         assertEquals("image", doc.selectFirst("img").attr("data-type"));
         assertFalse(doc.selectFirst("img").hasClass("image-block"));
@@ -142,11 +155,16 @@ class FigureCaptionProcessorTest {
 
     @Test
     void textElementSiblingMakesBlockImageInline() {
-        Document doc = process("<p><span>前文</span><img src='a' class='image-block image-item'></p>"
-                + "<p><img src='b' class='image-block'><span>　 </span></p>");
+        Document doc = process("<p><span>前文</span><img src='a' data-docx-embedded='true' "
+                + "class='image-block image-item'></p>"
+                + "<p><img src='b' data-docx-embedded='true' class='image-block'><span>　 </span></p>"
+                + "<p><span>正文</span><img src='c' class='image-inline' style='float:right; width:10px'></p>");
         assertEquals("image-inline image-item", doc.selectFirst("img[src=a]").className());
         assertEquals("image-block image-item", doc.selectFirst("img[src=b]").className());
-        assertEquals(2, doc.select("img[data-type=image]").size());
+        assertEquals("image-block image-item", doc.selectFirst("img[src=c]").className());
+        assertEquals("width:10px;", doc.selectFirst("img[src=c]").attr("style"));
+        assertEquals(3, doc.select("img[data-type=image]").size());
+        assertTrue(doc.select("img[data-docx-embedded]").isEmpty());
     }
 
     @Test

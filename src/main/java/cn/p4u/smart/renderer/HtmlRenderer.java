@@ -69,7 +69,7 @@ public final class HtmlRenderer {
             renderBlock(sb, block, config, model.styles(), resourceRoot);
         }
         sb.append("</body>\n</html>");
-        return sb.toString();
+        return AdjacentSpanProcessor.process(FigureCaptionProcessor.process(sb.toString()));
     }
 
     /**
@@ -502,7 +502,15 @@ public final class HtmlRenderer {
      */
     private static void renderImage(StringBuilder sb, ImageElement img,
                                     ConversionConfig config, Path resourceRoot) {
-        sb.append("<img");
+        // 所有图片先按普通图片输出。嵌入型图片使用临时属性传递原始定位信息，
+        // HTML 后处理只有在确认它与同级文字混排时才会改为行内图片。
+        sb.append("<img class=\"image-block image-item\" data-type=\"image\"");
+        if (img.wrapMode() == WrapMode.INLINE) {
+            sb.append(" data-docx-embedded=\"true\"");
+        }
+        if (img.altText() != null && !img.altText().isBlank()) {
+            sb.append(" alt=\"").append(escapeAttr(img.altText())).append("\"");
+        }
         Path mediaPath = resolveMediaPath(img.mediaPath(), resourceRoot);
         if (mediaPath == null || !Files.exists(mediaPath)) {
             sb.append("><span style=\"color: #999; font-style: italic;\">[image not found]</span>");
@@ -552,9 +560,10 @@ public final class HtmlRenderer {
 
         if (img.width() > 0) sb.append(" width=\"").append(pxW).append("\"");
         if (img.height() > 0) sb.append(" height=\"").append(pxH).append("\"");
-        if (img.wrapMode() == WrapMode.LEFT) sb.append(" style=\"float: left;\"");
-        else if (img.wrapMode() == WrapMode.RIGHT) sb.append(" style=\"float: right;\"");
-        else if (img.wrapMode() == WrapMode.TOP_AND_BOTTOM) sb.append(" style=\"display: block; margin: auto;\"");
+        // 普通图片不再输出 float，避免 Word 环绕方式破坏转换后的 HTML 布局。
+        if (img.wrapMode() == WrapMode.TOP_AND_BOTTOM) {
+            sb.append(" style=\"display: block; margin: auto;\"");
+        }
         sb.append(">");
     }
 

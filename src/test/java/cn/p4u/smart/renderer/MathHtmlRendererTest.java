@@ -37,6 +37,50 @@ class MathHtmlRendererTest {
     assertTrue(resolved.get());
     assertTrue(html.toString().startsWith("<img src=\"memory:formula\""));
     assertTrue(html.toString().contains("data-latex=\"x\""));
+    assertFormulaImage(html.toString());
+  }
+
+  @Test
+  void onlineFormulaKeepsDedicatedAttributesAfterHtmlPostProcessing() {
+    var math = new MathElement("x+1", null, null);
+    var paragraph = new cn.p4u.smart.model.ParagraphBlock(
+        "", null, null, null, java.util.List.of(math));
+    var model = new cn.p4u.smart.model.DocumentModel(
+        java.util.Map.of(), java.util.List.of(paragraph), null);
+    String html = HtmlRenderer.render(model, ConversionConfig.defaults());
+    assertFormulaImage(html);
+    assertEquals("x+1", org.jsoup.Jsoup.parse(html).selectFirst("img").attr("data-latex"));
+  }
+
+  @Test
+  void imageWithoutLatexStillHasFormulaAttributes() {
+    var config = ConversionConfig.builder().imageUriResolver((path, mime) ->
+        new ImageUriResolver.ResolveResult("memory:formula", mime)).build();
+    var html = new StringBuilder();
+    MathHtmlRenderer.render(html, new MathElement("", "media/formula.png", "image/png"),
+        config, resourceRoot);
+    assertFormulaImage(html.toString());
+  }
+
+  @Test
+  void failedImageStillHasFormulaAttributes() {
+    var config = ConversionConfig.builder().imageUriResolver((path, mime) -> {
+      throw new java.io.IOException("test failure");
+    }).build();
+    var html = new StringBuilder();
+    MathHtmlRenderer.render(html, new MathElement("x", "media/formula.png", "image/png"),
+        config, resourceRoot);
+    assertFormulaImage(html.toString());
+    assertTrue(html.toString().contains("[math image resolve failed]"));
+  }
+
+  /** 同时检查渲染结果及后处理结果，防止普通图片类名被重新加回。 */
+  private void assertFormulaImage(String html) {
+    for (String result : java.util.List.of(html, FigureCaptionProcessor.process(html))) {
+      var image = org.jsoup.Jsoup.parse(result).selectFirst("img");
+      assertEquals("formula-item formula-image", image.className());
+      assertEquals("formula", image.attr("data-type"));
+    }
   }
 
   @Test

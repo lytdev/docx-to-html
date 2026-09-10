@@ -64,6 +64,7 @@ final class MathHtmlRenderer {
             "<img src=\"\" style=\"vertical-align: middle; color: #999; font-style: italic;\" "
                 + "alt=\"[math image resolve failed]\"");
       }
+      appendFormulaAttributes(context.html());
       appendLatexAttribute(context.html(), math.latex());
       context.html().append(">");
     }
@@ -99,7 +100,9 @@ final class MathHtmlRenderer {
             .append(HtmlEscaper.attribute(latex))
             .append("\" data-latex=\"")
             .append(HtmlEscaper.attribute(latex))
-            .append("\">");
+            .append("\"");
+        appendFormulaAttributes(context.html());
+        context.html().append(">");
       } catch (java.io.UnsupportedEncodingException e) {
         context.html().append("<span style=\"color: #999;\">[")
             .append(HtmlEscaper.text(latex))
@@ -123,6 +126,11 @@ final class MathHtmlRenderer {
           .append(HtmlEscaper.text(latex))
           .append("</span>");
     }
+  }
+
+  /** 本地图片、在线公式图片和加载失败占位图片使用相同的公式标记。 */
+  private static void appendFormulaAttributes(StringBuilder html) {
+    html.append(" class=\"formula-item formula-image\" data-type=\"formula\"");
   }
 
   private static void appendLatexAttribute(StringBuilder html, String latex) {
