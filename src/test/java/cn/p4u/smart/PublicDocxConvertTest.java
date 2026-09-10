@@ -13,8 +13,8 @@ public class PublicDocxConvertTest {
   @Test
   public void convertsInputStreamToHtmlStrTest() throws Exception {
     String tmpDir = "E:\\_tmp\\word\\";
-    String docxPath = tmpDir + "demo-图片测试.docx";
-    String htmlPath = tmpDir + "demo-图片测试.html";
+    String docxPath = tmpDir + "demo-公式测试.docx";
+    String htmlPath = tmpDir + "demo-公式测试.html";
     FileInputStream fileInputStream = new FileInputStream(docxPath);
     String htmlContent = DocxConverter.convert(fileInputStream, new Image2Base64Resolver(), tmpDir);
     Files.write(Paths.get(htmlPath), htmlContent.getBytes());

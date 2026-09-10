@@ -1254,7 +1254,12 @@ public final class DocumentParser {
             height = parseVmlSize(style, "height");
         }
 
-        return new ImageElement(mediaPath, mimeType, width, height, WrapMode.INLINE);
+        String altText = firstNonBlank(
+                attributeByLocalName(shapeEl, "alt"),
+                attributeByLocalName(imagedataEl, "title"),
+                attributeByLocalName(shapeEl, "title"),
+                attributeByLocalName(shapeEl, "name"));
+        return new ImageElement(mediaPath, mimeType, width, height, WrapMode.INLINE, altText);
     }
 
     /**
@@ -1710,7 +1715,48 @@ public final class DocumentParser {
             else if (hasChildLocalName(anchor, WP, "wrapTight")) wrapMode = WrapMode.LEFT;
         }
 
-        return new ImageElement(mediaPath, mimeType, width, height, wrapMode);
+        return new ImageElement(mediaPath, mimeType, width, height, wrapMode,
+                extractDrawingImageAlt(drawingEl));
+    }
+
+    /** 从 DrawingML 非可视属性中读取别名/描述，缺失时回退到图片名称。 */
+    private String extractDrawingImageAlt(Element drawingEl) {
+        NodeList docProperties = drawingEl.getElementsByTagNameNS(WP, "docPr");
+        if (docProperties.getLength() > 0) {
+            String value = imageMetadataText((Element) docProperties.item(0));
+            if (value != null) return value;
+        }
+        // 某些 Office/WPS 文档只在 pic:cNvPr 中保存图片名称或别名。
+        NodeList pictureProperties = drawingEl.getElementsByTagNameNS("*", "cNvPr");
+        return pictureProperties.getLength() == 0
+                ? null : imageMetadataText((Element) pictureProperties.item(0));
+    }
+
+    /** descr/title 是面向读者的别名，优先级高于 Word 自动生成的图片名称。 */
+    private String imageMetadataText(Element properties) {
+        return firstNonBlank(
+                attributeByLocalName(properties, "descr"),
+                attributeByLocalName(properties, "title"),
+                attributeByLocalName(properties, "name"));
+    }
+
+    /** 同时兼容无命名空间属性和 o:title 这类带前缀属性。 */
+    private String attributeByLocalName(Element element, String localName) {
+        String direct = element.getAttribute(localName);
+        if (!direct.isBlank()) return direct;
+        NamedNodeMap attributes = element.getAttributes();
+        for (int i = 0; i < attributes.getLength(); i++) {
+            Node attribute = attributes.item(i);
+            if (localName.equals(attribute.getLocalName())) return attribute.getNodeValue();
+        }
+        return null;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) return value.trim();
+        }
+        return null;
     }
 
     // ---- DrawingML 形状解析 ----

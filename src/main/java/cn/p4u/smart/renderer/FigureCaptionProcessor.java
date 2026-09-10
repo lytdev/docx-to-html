@@ -1,6 +1,7 @@
 package cn.p4u.smart.renderer;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -70,10 +71,13 @@ final class FigureCaptionProcessor {
                 oldParent.remove();
                 oldParent = nextParent;
             }
+            String captionText = stripWhitespace(text.toString());
+            // 图注比 Word 中常见的“图片 1”等内部名称更能描述图片，优先作为 alt。
+            image.attr("alt", captionText);
             Element figcaption = new Element("figcaption");
             figure.appendChild(figcaption);
             // text() 创建文本节点并自动转义特殊字符，图注中不再保留任何子标签。
-            figcaption.text(stripWhitespace(text.toString()));
+            figcaption.text(captionText);
             for (Node node : caption) node.remove();
             changed = true;
         }
@@ -91,17 +95,25 @@ final class FigureCaptionProcessor {
         removeFloatStyle(image);
         if ("formula".equals(image.attr("data-type"))) {
             image.removeAttr("data-docx-embedded");
-            image.removeClass("image-block").removeClass("image-inline").removeClass("image-item")
-                    .addClass("formula-item").addClass("formula-image");
+            setImageClasses(image, "formula-item", "formula-image");
         } else {
             boolean inline = "true".equals(image.attr("data-docx-embedded"))
                     && hasTextElementSibling(image);
             image.removeAttr("data-docx-embedded");
             image.attr("data-type", "image");
-            image.removeClass("image-block").removeClass("image-inline").removeClass("image-item");
-            image.addClass(inline ? "image-inline" : "image-block").addClass("image-item");
+            setImageClasses(image, inline ? "image-inline" : "image-block", "image-item");
         }
         return !before.equals(image.outerHtml());
+    }
+
+    /** 原位设置图片专用类，保留业务自定义类及 class 属性在标签中的位置。 */
+    private static void setImageClasses(Element image, String primary, String secondary) {
+        LinkedHashSet<String> classes = new LinkedHashSet<>(image.classNames());
+        classes.removeAll(Set.of(
+                "image-block", "image-inline", "image-item", "formula-item", "formula-image"));
+        classes.add(primary);
+        classes.add(secondary);
+        image.attr("class", String.join(" ", classes));
     }
 
     /** 删除图片 style 中的 float 声明，同时保留尺寸、对齐等其他内联样式。 */

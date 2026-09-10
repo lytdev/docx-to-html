@@ -24,6 +24,7 @@ class FigureCaptionProcessorTest {
                     .addMedia("a.png", new byte[]{1, 2, 3})
                     .addDocument("<w:p><w:r><w:t>图片前的行内文字</w:t></w:r>"
                             + "<w:r><w:drawing><wp:inline><wp:extent cx=\"9525\" cy=\"9525\"/>"
+                            + "<wp:docPr id=\"1\" name=\"图片名称\" descr=\"图片别名 &amp; &quot;测试&quot;\"/>"
                             + "<a:graphic><a:graphicData><a:blip r:embed=\"rId1\"/></a:graphicData></a:graphic>"
                             + "</wp:inline></w:drawing></w:r></w:p>"
                             + "<w:p><w:r><w:t>图3-9　直接接触防护</w:t></w:r></w:p>");
@@ -31,6 +32,7 @@ class FigureCaptionProcessorTest {
                 Document result = Jsoup.parse(cn.p4u.smart.converter.DocxConverter.convert(input));
                 assertEquals(1, result.select("figure img").size());
                 assertEquals("image-inline image-item", result.selectFirst("figure img").className());
+                assertEquals("图3-9　直接接触防护", result.selectFirst("figure img").attr("alt"));
                 assertTrue(result.body().text().contains("图片前的行内文字"));
                 assertTrue(result.selectFirst("figcaption").text().contains("直接接触防护"));
             }
@@ -54,6 +56,7 @@ class FigureCaptionProcessorTest {
                 assertEquals("image-block image-item", result.select("img").get(0).className());
                 assertEquals("image-block image-item", result.select("img").get(1).className());
                 assertEquals("image-block image-item", result.select("img").get(2).className());
+                assertEquals("嵌入图片名称", result.select("img").get(2).attr("alt"));
                 assertEquals(3, result.select("img[data-type=image]").size());
                 assertTrue(result.select("img[style*=float]").isEmpty());
                 assertTrue(result.select("img[data-docx-embedded]").isEmpty());
@@ -69,6 +72,7 @@ class FigureCaptionProcessorTest {
 
     private String embeddedImageParagraph(String relationshipId) {
         return "<w:p><w:r><w:drawing><wp:inline><wp:extent cx=\"9525\" cy=\"9525\"/>"
+                + "<wp:docPr id=\"3\" name=\"嵌入图片名称\"/>"
                 + "<a:graphic><a:graphicData><a:blip r:embed=\"" + relationshipId
                 + "\"/></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>";
     }
@@ -172,6 +176,7 @@ class FigureCaptionProcessorTest {
         Document doc = process("<div><p>正文<img src='a'></p></div><p>图1 <b>&lt;防护&gt;&amp;</b></p>");
         assertTrue(doc.body().text().contains("正文"));
         assertEquals("图1 <防护>&", doc.selectFirst("figcaption").wholeText());
+        assertEquals("图1 <防护>&", doc.selectFirst("figure > img").attr("alt"));
         assertTrue(doc.selectFirst("figcaption").children().isEmpty());
         assertEquals(2, doc.selectFirst("figure").childrenSize());
         assertNotNull(doc.selectFirst("figure > img"));

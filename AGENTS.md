@@ -58,7 +58,7 @@ DocumentModel
   └── content: List<ContentBlock>
         ├── ParagraphBlock (styleId, alignment, outlineLvl, indentation, numId, ilvl, elements)
         │     ├── TextRun      (FontSpec, text, highlight, shading, superscript/subscript)
-        │     ├── ImageElement (mediaPath, mime, width, height, wrapMode)
+        │     ├── ImageElement (mediaPath, mime, width, height, wrapMode, altText)
         │     ├── MathElement  (latex, mathml, imagePath)
         │     ├── HyperlinkElement (url, runs: List<TextRun>)
         │     └── ShapeElement  (svg, width, height, children: List<ShapeElement>)  — recursive for groups
@@ -152,7 +152,8 @@ All OOXML DOM parsing must go through `SecureXmlDocuments.parse()`, which disabl
 
 ## Dependencies
 
-One direct runtime dependency:
+Direct runtime dependencies:
+- **jsoup 1.22.1** — HTML tree processing for adjacent image captions (`FigureCaptionProcessor`)
 - **aliyun-sdk-oss 3.17.4** — Aliyun OSS image resolver implementation
 
 One test dependency:

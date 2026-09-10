@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * 图片元素不可变值类，表示段落中嵌入的一张图片。
  * <p>
- * 核心职责：封装图片的介质路径、MIME 类型、尺寸（EMU 单位）和文字环绕模式，
+ * 核心职责：封装图片的介质路径、MIME 类型、尺寸（EMU 单位）、文字环绕模式和替代文本，
  * 是文档模型中图片的完整描述。
  * <p>
  * 主要使用场景：DocumentParser 解析 w:drawing / v:imagedata 时构建 ImageElement；
@@ -24,6 +24,8 @@ public final class ImageElement implements ParagraphElement {
     private final int height;
     /** 文字环绕模式 */
     private final WrapMode wrapMode;
+    /** 图片名称或别名，用于 HTML img 的 alt 属性；不存在时为 null */
+    private final String altText;
 
     /**
      * 构造图片元素。
@@ -37,11 +39,23 @@ public final class ImageElement implements ParagraphElement {
     public ImageElement(String mediaPath, String mimeType,
                         int width, int height,
                         WrapMode wrapMode) {
+        this(mediaPath, mimeType, width, height, wrapMode, null);
+    }
+
+    /**
+     * 构造包含名称或别名的图片元素。
+     *
+     * @param altText 图片名称或别名，可为 null
+     */
+    public ImageElement(String mediaPath, String mimeType,
+                        int width, int height,
+                        WrapMode wrapMode, String altText) {
         this.mediaPath = mediaPath;
         this.mimeType = mimeType;
         this.width = width;
         this.height = height;
         this.wrapMode = wrapMode;
+        this.altText = altText;
     }
 
     public String mediaPath() { return mediaPath; }
@@ -49,6 +63,7 @@ public final class ImageElement implements ParagraphElement {
     public int width() { return width; }
     public int height() { return height; }
     public WrapMode wrapMode() { return wrapMode; }
+    public String altText() { return altText; }
 
     @Override
     public boolean equals(Object o) {
@@ -59,12 +74,13 @@ public final class ImageElement implements ParagraphElement {
                 && height == that.height
                 && Objects.equals(mediaPath, that.mediaPath)
                 && Objects.equals(mimeType, that.mimeType)
+                && Objects.equals(altText, that.altText)
                 && wrapMode == that.wrapMode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mediaPath, mimeType, width, height, wrapMode);
+        return Objects.hash(mediaPath, mimeType, width, height, wrapMode, altText);
     }
 
     @Override
@@ -73,6 +89,7 @@ public final class ImageElement implements ParagraphElement {
                 + ", mimeType=" + mimeType
                 + ", width=" + width
                 + ", height=" + height
-                + ", wrapMode=" + wrapMode + "]";
+                + ", wrapMode=" + wrapMode
+                + ", altText=" + altText + "]";
     }
 }
