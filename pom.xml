@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.lytdev</groupId>
+    <groupId>cn.p4u.agile</groupId>
     <artifactId>docx-to-html</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -25,9 +25,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>scm:git@github.com:chinabugotech/hutool.git</connection>
-        <developerConnection>scm:git@github.com:chinabugotech/hutool.git</developerConnection>
-        <url>git@github.com:chinabugotech/hutool.git</url>
+        <connection>scm:git:https://github.com/lytdev/docx-to-html.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/lytdev/docx-to-html.git</developerConnection>
+        <url>https://github.com/lytdev/docx-to-html</url>
     </scm>
 
     <properties>
@@ -106,7 +106,7 @@
                             <!-- 关闭严格的文档检查，避免因注释问题导致构建失败 -->
                             <doclint>none</doclint>
                             <!-- 确保即使生成 Javadoc 时有错误，也不会让整个构建失败 -->
-                            <failOnError>false</failOnError>
+                            <failOnError>true</failOnError>
                             <!-- 如果使用 JDK 21 且插件版本有兼容性问题，可以添加此配置 -->
                             <disableNoFonts>true</disableNoFonts>
                         </configuration>
