@@ -43,3 +43,4 @@ build/
 .superpowers/
 dependency-reduced-pom.xml
 *.docx
+deploy.bat

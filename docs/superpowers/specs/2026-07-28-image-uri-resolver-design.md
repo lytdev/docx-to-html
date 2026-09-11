@@ -23,7 +23,7 @@ Replace `ConversionConfig.ImageMode` enum (BASE64/LINK) with a pluggable `ImageU
 
 ### 1. Core Interface & Types
 
-New file: `src/main/java/cn/p4u/smart/renderer/ImageUriResolver.java`
+New file: `src/main/java/cn/p4u/dth/renderer/ImageUriResolver.java`
 
 ```java
 public record ResolveResult(String uri, String mimeType) {}
@@ -37,13 +37,13 @@ public interface ImageUriResolver {
 
 ### 2. Image2Base64Resolver
 
-New file: `src/main/java/cn/p4u/smart/renderer/Image2Base64Resolver.java`
+New file: `src/main/java/cn/p4u/dth/renderer/Image2Base64Resolver.java`
 
 Stateless. Reads file bytes, Base64-encodes, returns `data:<mime>;base64,...` data URI.
 
 ### 3. Image2OssResolver
 
-New file: `src/main/java/cn/p4u/smart/renderer/Image2OssResolver.java`
+New file: `src/main/java/cn/p4u/dth/renderer/Image2OssResolver.java`
 
 ```java
 public record OssConfig(String endpoint, String bucket, String accessKey, String secretKey) {}
@@ -113,15 +113,15 @@ Add `aliyun-sdk-oss` 3.x to `pom.xml`. Only `Image2OssResolver` references it.
 
 | Action | File |
 |--------|------|
-| Create | `src/main/java/cn/p4u/smart/renderer/ImageUriResolver.java` |
-| Create | `src/main/java/cn/p4u/smart/renderer/Image2Base64Resolver.java` |
-| Create | `src/main/java/cn/p4u/smart/renderer/Image2OssResolver.java` |
-| Modify | `src/main/java/cn/p4u/smart/converter/ConversionConfig.java` |
-| Modify | `src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java` |
-| Modify | `src/main/java/cn/p4u/smart/renderer/ImageHandler.java` |
-| Modify | `src/main/java/cn/p4u/smart/cli/CliRunner.java` |
-| Modify | `src/main/java/cn/p4u/smart/gui/GuiRunner.java` |
-| Modify | `src/main/java/cn/p4u/smart/converter/DocxConverter.java` |
+| Create | `src/main/java/cn/p4u/dth/renderer/ImageUriResolver.java` |
+| Create | `src/main/java/cn/p4u/dth/renderer/Image2Base64Resolver.java` |
+| Create | `src/main/java/cn/p4u/dth/renderer/Image2OssResolver.java` |
+| Modify | `src/main/java/cn/p4u/dth/converter/ConversionConfig.java` |
+| Modify | `src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java` |
+| Modify | `src/main/java/cn/p4u/dth/renderer/ImageHandler.java` |
+| Modify | `src/main/java/cn/p4u/dth/cli/CliRunner.java` |
+| Modify | `src/main/java/cn/p4u/dth/gui/GuiRunner.java` |
+| Modify | `src/main/java/cn/p4u/dth/converter/DocxConverter.java` |
 | Modify | `pom.xml` (add OSS SDK) |
 | Update | tests under `src/test/` |
 

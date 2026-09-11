@@ -13,7 +13,7 @@
 ## File Structure
 
 ```
-src/main/java/cn/p4u/smart/
+src/main/java/cn/p4u/dth/
 ├── DocxConversionException.java
 ├── model/
 │   ├── ContentBlock.java           sealed interface
@@ -49,7 +49,7 @@ src/main/java/cn/p4u/smart/
 └── cli/
     └── CliRunner.java              picocli entry point
 
-src/test/java/cn/p4u/smart/
+src/test/java/cn/p4u/dth/
 ├── extractor/DocxExtractorTest.java
 ├── parser/
 │   ├── RelsParserTest.java
@@ -78,8 +78,8 @@ src/test/resources/fixtures/
 
 **Files:**
 - Modify: `pom.xml`
-- Delete: `src/main/java/cn/p4u/smart/App.java`
-- Delete: `src/test/java/cn/p4u/smart/AppTest.java`
+- Delete: `src/main/java/cn/p4u/dth/App.java`
+- Delete: `src/test/java/cn/p4u/dth/AppTest.java`
 
 - [ ] **Step 1: Rewrite pom.xml with Java 21 and all dependencies**
 
@@ -90,7 +90,7 @@ src/test/resources/fixtures/
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>cn.p4u.smart</groupId>
+  <groupId>cn.p4u.dth</groupId>
   <artifactId>docxToHtml4j</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
@@ -153,7 +153,7 @@ src/test/resources/fixtures/
         <configuration>
           <archive>
             <manifest>
-              <mainClass>cn.p4u.smart.cli.CliRunner</mainClass>
+              <mainClass>cn.p4u.dth.cli.CliRunner</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -166,8 +166,8 @@ src/test/resources/fixtures/
 - [ ] **Step 2: Delete skeleton files**
 
 ```bash
-rm src/main/java/cn/p4u/smart/App.java
-rm src/test/java/cn/p4u/smart/AppTest.java
+rm src/main/java/cn/p4u/dth/App.java
+rm src/test/java/cn/p4u/dth/AppTest.java
 ```
 
 - [ ] **Step 3: Verify Maven build**
@@ -179,7 +179,7 @@ Expected: BUILD SUCCESS
 
 ```bash
 git add pom.xml
-git rm src/main/java/cn/p4u/smart/App.java src/test/java/cn/p4u/smart/AppTest.java
+git rm src/main/java/cn/p4u/dth/App.java src/test/java/cn/p4u/dth/AppTest.java
 git commit -m "chore: set up Java 21 project with picocli, junit 5, commons-io"
 ```
 
@@ -188,30 +188,30 @@ git commit -m "chore: set up Java 21 project with picocli, junit 5, commons-io"
 ### Task 2: Model Classes
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/model/WrapMode.java`
-- Create: `src/main/java/cn/p4u/smart/model/FontSpec.java`
-- Create: `src/main/java/cn/p4u/smart/model/Indentation.java`
-- Create: `src/main/java/cn/p4u/smart/model/StyleDef.java`
-- Create: `src/main/java/cn/p4u/smart/model/ContentBlock.java`
-- Create: `src/main/java/cn/p4u/smart/model/ParagraphElement.java`
-- Create: `src/main/java/cn/p4u/smart/model/TextRun.java`
-- Create: `src/main/java/cn/p4u/smart/model/ImageElement.java`
-- Create: `src/main/java/cn/p4u/smart/model/MathElement.java`
-- Create: `src/main/java/cn/p4u/smart/model/HyperlinkElement.java`
-- Create: `src/main/java/cn/p4u/smart/model/ParagraphBlock.java`
-- Create: `src/main/java/cn/p4u/smart/model/TableCell.java`
-- Create: `src/main/java/cn/p4u/smart/model/TableRow.java`
-- Create: `src/main/java/cn/p4u/smart/model/TableBlock.java`
-- Create: `src/main/java/cn/p4u/smart/model/DocumentModel.java`
+- Create: `src/main/java/cn/p4u/dth/model/WrapMode.java`
+- Create: `src/main/java/cn/p4u/dth/model/FontSpec.java`
+- Create: `src/main/java/cn/p4u/dth/model/Indentation.java`
+- Create: `src/main/java/cn/p4u/dth/model/StyleDef.java`
+- Create: `src/main/java/cn/p4u/dth/model/ContentBlock.java`
+- Create: `src/main/java/cn/p4u/dth/model/ParagraphElement.java`
+- Create: `src/main/java/cn/p4u/dth/model/TextRun.java`
+- Create: `src/main/java/cn/p4u/dth/model/ImageElement.java`
+- Create: `src/main/java/cn/p4u/dth/model/MathElement.java`
+- Create: `src/main/java/cn/p4u/dth/model/HyperlinkElement.java`
+- Create: `src/main/java/cn/p4u/dth/model/ParagraphBlock.java`
+- Create: `src/main/java/cn/p4u/dth/model/TableCell.java`
+- Create: `src/main/java/cn/p4u/dth/model/TableRow.java`
+- Create: `src/main/java/cn/p4u/dth/model/TableBlock.java`
+- Create: `src/main/java/cn/p4u/dth/model/DocumentModel.java`
 
 These are pure data classes with no logic, so a single test verifying construction is sufficient.
 
 - [ ] **Step 1: Write test for model construction**
 
-Create `src/test/java/cn/p4u/smart/model/ModelTest.java`:
+Create `src/test/java/cn/p4u/dth/model/ModelTest.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -256,10 +256,10 @@ Expected: Compilation FAIL — model classes don't exist
 
 - [ ] **Step 3: Create WrapMode enum**
 
-Create `src/main/java/cn/p4u/smart/model/WrapMode.java`:
+Create `src/main/java/cn/p4u/dth/model/WrapMode.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public enum WrapMode {
     INLINE, LEFT, RIGHT, TOP_AND_BOTTOM
@@ -268,30 +268,30 @@ public enum WrapMode {
 
 - [ ] **Step 4: Create FontSpec record**
 
-Create `src/main/java/cn/p4u/smart/model/FontSpec.java`:
+Create `src/main/java/cn/p4u/dth/model/FontSpec.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public record FontSpec(String name, String size, String color) {}
 ```
 
 - [ ] **Step 5: Create Indentation record**
 
-Create `src/main/java/cn/p4u/smart/model/Indentation.java`:
+Create `src/main/java/cn/p4u/dth/model/Indentation.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public record Indentation(String left, String right, String firstLine) {}
 ```
 
 - [ ] **Step 6: Create StyleDef record**
 
-Create `src/main/java/cn/p4u/smart/model/StyleDef.java`:
+Create `src/main/java/cn/p4u/dth/model/StyleDef.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import java.util.Map;
 
@@ -306,20 +306,20 @@ public record StyleDef(
 
 - [ ] **Step 7: Create ContentBlock sealed interface**
 
-Create `src/main/java/cn/p4u/smart/model/ContentBlock.java`:
+Create `src/main/java/cn/p4u/dth/model/ContentBlock.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public sealed interface ContentBlock permits ParagraphBlock, TableBlock {}
 ```
 
 - [ ] **Step 8: Create ParagraphElement sealed interface**
 
-Create `src/main/java/cn/p4u/smart/model/ParagraphElement.java`:
+Create `src/main/java/cn/p4u/dth/model/ParagraphElement.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public sealed interface ParagraphElement
         permits TextRun, ImageElement, MathElement, HyperlinkElement {}
@@ -327,10 +327,10 @@ public sealed interface ParagraphElement
 
 - [ ] **Step 9: Create TextRun record**
 
-Create `src/main/java/cn/p4u/smart/model/TextRun.java`:
+Create `src/main/java/cn/p4u/dth/model/TextRun.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public record TextRun(
         String text,
@@ -349,10 +349,10 @@ public record TextRun(
 
 - [ ] **Step 10: Create ImageElement record**
 
-Create `src/main/java/cn/p4u/smart/model/ImageElement.java`:
+Create `src/main/java/cn/p4u/dth/model/ImageElement.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public record ImageElement(
         String mediaPath,
@@ -365,10 +365,10 @@ public record ImageElement(
 
 - [ ] **Step 11: Create MathElement record**
 
-Create `src/main/java/cn/p4u/smart/model/MathElement.java`:
+Create `src/main/java/cn/p4u/dth/model/MathElement.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 public record MathElement(
         String latex,
@@ -379,10 +379,10 @@ public record MathElement(
 
 - [ ] **Step 12: Create HyperlinkElement record**
 
-Create `src/main/java/cn/p4u/smart/model/HyperlinkElement.java`:
+Create `src/main/java/cn/p4u/dth/model/HyperlinkElement.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import java.util.List;
 
@@ -394,10 +394,10 @@ public record HyperlinkElement(
 
 - [ ] **Step 13: Create ParagraphBlock record**
 
-Create `src/main/java/cn/p4u/smart/model/ParagraphBlock.java`:
+Create `src/main/java/cn/p4u/dth/model/ParagraphBlock.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import java.util.List;
 
@@ -411,10 +411,10 @@ public record ParagraphBlock(
 
 - [ ] **Step 14: Create TableCell record**
 
-Create `src/main/java/cn/p4u/smart/model/TableCell.java`:
+Create `src/main/java/cn/p4u/dth/model/TableCell.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import java.util.List;
 
@@ -432,10 +432,10 @@ public record TableCell(
 
 - [ ] **Step 15: Create TableRow record**
 
-Create `src/main/java/cn/p4u/smart/model/TableRow.java`:
+Create `src/main/java/cn/p4u/dth/model/TableRow.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import java.util.List;
 
@@ -447,10 +447,10 @@ public record TableRow(
 
 - [ ] **Step 16: Create TableBlock record**
 
-Create `src/main/java/cn/p4u/smart/model/TableBlock.java`:
+Create `src/main/java/cn/p4u/dth/model/TableBlock.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import java.util.List;
 
@@ -465,10 +465,10 @@ public record TableBlock(
 
 - [ ] **Step 17: Create DocumentModel record**
 
-Create `src/main/java/cn/p4u/smart/model/DocumentModel.java`:
+Create `src/main/java/cn/p4u/dth/model/DocumentModel.java`:
 
 ```java
-package cn.p4u.smart.model;
+package cn.p4u.dth.model;
 
 import java.util.List;
 import java.util.Map;
@@ -487,7 +487,7 @@ Expected: 2 tests PASS
 - [ ] **Step 19: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/model/ src/test/java/cn/p4u/smart/model/
+git add src/main/java/cn/p4u/dth/model/ src/test/java/cn/p4u/dth/model/
 git commit -m "feat: add intermediate model classes with sealed interfaces and records"
 ```
 
@@ -496,14 +496,14 @@ git commit -m "feat: add intermediate model classes with sealed interfaces and r
 ### Task 3: DocxConversionException
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/DocxConversionException.java`
+- Create: `src/main/java/cn/p4u/dth/DocxConversionException.java`
 
 - [ ] **Step 1: Write test for exception**
 
-Create `src/test/java/cn/p4u/smart/DocxConversionExceptionTest.java`:
+Create `src/test/java/cn/p4u/dth/DocxConversionExceptionTest.java`:
 
 ```java
-package cn.p4u.smart;
+package cn.p4u.dth;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -527,10 +527,10 @@ Expected: FAIL — class doesn't exist
 
 - [ ] **Step 3: Create DocxConversionException**
 
-Create `src/main/java/cn/p4u/smart/DocxConversionException.java`:
+Create `src/main/java/cn/p4u/dth/DocxConversionException.java`:
 
 ```java
-package cn.p4u.smart;
+package cn.p4u.dth;
 
 public class DocxConversionException extends RuntimeException {
 
@@ -552,7 +552,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/DocxConversionException.java src/test/java/cn/p4u/smart/DocxConversionExceptionTest.java
+git add src/main/java/cn/p4u/dth/DocxConversionException.java src/test/java/cn/p4u/dth/DocxConversionExceptionTest.java
 git commit -m "feat: add DocxConversionException"
 ```
 
@@ -561,8 +561,8 @@ git commit -m "feat: add DocxConversionException"
 ### Task 4: DocxExtractor
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/extractor/DocxExtractor.java`
-- Create: `src/test/java/cn/p4u/smart/extractor/DocxExtractorTest.java`
+- Create: `src/main/java/cn/p4u/dth/extractor/DocxExtractor.java`
+- Create: `src/test/java/cn/p4u/dth/extractor/DocxExtractorTest.java`
 - Create: `src/test/resources/fixtures/minimal.docx`
 
 - [ ] **Step 1: Create test fixture minimal.docx**
@@ -572,10 +572,10 @@ Create a minimal docx programmatically. A docx is a zip containing at minimum:
 - `_rels/.rels`
 - `word/document.xml`
 
-Create test helper `src/test/java/cn/p4u/smart/util/TestDocxBuilder.java`:
+Create test helper `src/test/java/cn/p4u/dth/util/TestDocxBuilder.java`:
 
 ```java
-package cn.p4u.smart.util;
+package cn.p4u.dth.util;
 
 import java.io.*;
 import java.nio.file.*;
@@ -677,12 +677,12 @@ public class TestDocxBuilder implements AutoCloseable {
 
 - [ ] **Step 2: Write DocxExtractor test**
 
-Create `src/test/java/cn/p4u/smart/extractor/DocxExtractorTest.java`:
+Create `src/test/java/cn/p4u/dth/extractor/DocxExtractorTest.java`:
 
 ```java
-package cn.p4u.smart.extractor;
+package cn.p4u.dth.extractor;
 
-import cn.p4u.smart.util.TestDocxBuilder;
+import cn.p4u.dth.util.TestDocxBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -717,7 +717,7 @@ class DocxExtractorTest {
 
     @Test
     void throwsForInvalidFile() {
-        assertThrows(cn.p4u.smart.DocxConversionException.class,
+        assertThrows(cn.p4u.dth.DocxConversionException.class,
                 () -> DocxExtractor.extract(tempDir.resolve("nonexistent.docx")));
     }
 
@@ -744,12 +744,12 @@ Expected: FAIL — class doesn't exist
 
 - [ ] **Step 4: Create DocxExtractor**
 
-Create `src/main/java/cn/p4u/smart/extractor/DocxExtractor.java`:
+Create `src/main/java/cn/p4u/dth/extractor/DocxExtractor.java`:
 
 ```java
-package cn.p4u.smart.extractor;
+package cn.p4u.dth.extractor;
 
-import cn.p4u.smart.DocxConversionException;
+import cn.p4u.dth.DocxConversionException;
 import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
@@ -808,7 +808,7 @@ Expected: 3 tests PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/extractor/ src/test/java/cn/p4u/smart/extractor/ src/test/java/cn/p4u/smart/util/
+git add src/main/java/cn/p4u/dth/extractor/ src/test/java/cn/p4u/dth/extractor/ src/test/java/cn/p4u/dth/util/
 git commit -m "feat: add DocxExtractor to unzip docx to temp directory"
 ```
 
@@ -817,15 +817,15 @@ git commit -m "feat: add DocxExtractor to unzip docx to temp directory"
 ### Task 5: RelsParser
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/parser/RelsParser.java`
-- Create: `src/test/java/cn/p4u/smart/parser/RelsParserTest.java`
+- Create: `src/main/java/cn/p4u/dth/parser/RelsParser.java`
+- Create: `src/test/java/cn/p4u/dth/parser/RelsParserTest.java`
 
 - [ ] **Step 1: Write RelsParser test**
 
-Create `src/test/java/cn/p4u/smart/parser/RelsParserTest.java`:
+Create `src/test/java/cn/p4u/dth/parser/RelsParserTest.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
 import org.junit.jupiter.api.Test;
 import java.nio.file.*;
@@ -872,10 +872,10 @@ Expected: FAIL
 
 - [ ] **Step 3: Create RelsParser**
 
-Create `src/main/java/cn/p4u/smart/parser/RelsParser.java`:
+Create `src/main/java/cn/p4u/dth/parser/RelsParser.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
@@ -931,7 +931,7 @@ Expected: 2 tests PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/parser/RelsParser.java src/test/java/cn/p4u/smart/parser/
+git add src/main/java/cn/p4u/dth/parser/RelsParser.java src/test/java/cn/p4u/dth/parser/
 git commit -m "feat: add RelsParser for document relationships"
 ```
 
@@ -940,17 +940,17 @@ git commit -m "feat: add RelsParser for document relationships"
 ### Task 6: StylesParser
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/parser/StylesParser.java`
-- Create: `src/test/java/cn/p4u/smart/parser/StylesParserTest.java`
+- Create: `src/main/java/cn/p4u/dth/parser/StylesParser.java`
+- Create: `src/test/java/cn/p4u/dth/parser/StylesParserTest.java`
 
 - [ ] **Step 1: Write StylesParser test**
 
-Create `src/test/java/cn/p4u/smart/parser/StylesParserTest.java`:
+Create `src/test/java/cn/p4u/dth/parser/StylesParserTest.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
-import cn.p4u.smart.model.StyleDef;
+import cn.p4u.dth.model.StyleDef;
 import org.junit.jupiter.api.Test;
 import java.nio.file.*;
 import java.util.Map;
@@ -1003,12 +1003,12 @@ Expected: FAIL
 
 - [ ] **Step 3: Create StylesParser**
 
-Create `src/main/java/cn/p4u/smart/parser/StylesParser.java`:
+Create `src/main/java/cn/p4u/dth/parser/StylesParser.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
-import cn.p4u.smart.model.StyleDef;
+import cn.p4u.dth.model.StyleDef;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -1084,7 +1084,7 @@ Expected: 2 tests PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/parser/StylesParser.java src/test/java/cn/p4u/smart/parser/StylesParserTest.java
+git add src/main/java/cn/p4u/dth/parser/StylesParser.java src/test/java/cn/p4u/dth/parser/StylesParserTest.java
 git commit -m "feat: add StylesParser for document style definitions"
 ```
 
@@ -1095,18 +1095,18 @@ git commit -m "feat: add StylesParser for document style definitions"
 This is the largest task, broken into focused sub-sections.
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/parser/DocumentParser.java`
-- Create: `src/test/java/cn/p4u/smart/parser/DocumentParserTest.java`
+- Create: `src/main/java/cn/p4u/dth/parser/DocumentParser.java`
+- Create: `src/test/java/cn/p4u/dth/parser/DocumentParserTest.java`
 
 - [ ] **Step 1: Write test for plain paragraph parsing**
 
-Create `src/test/java/cn/p4u/smart/parser/DocumentParserTest.java`:
+Create `src/test/java/cn/p4u/dth/parser/DocumentParserTest.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
-import cn.p4u.smart.model.*;
-import cn.p4u.smart.util.TestDocxBuilder;
+import cn.p4u.dth.model.*;
+import cn.p4u.dth.util.TestDocxBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -1120,11 +1120,11 @@ class DocumentParserTest {
         try (var builder = new TestDocxBuilder()) {
             builder.addContentTypes().addRels().addDocument(bodyXml);
             Path docxPath = builder.build();
-            Path extracted = cn.p4u.smart.extractor.DocxExtractor.extract(docxPath);
+            Path extracted = cn.p4u.dth.extractor.DocxExtractor.extract(docxPath);
             try {
                 return DocumentParser.parse(extracted);
             } finally {
-                cn.p4u.smart.extractor.DocxExtractor.cleanup(extracted);
+                cn.p4u.dth.extractor.DocxExtractor.cleanup(extracted);
                 // builder close deletes docxPath
             }
         }
@@ -1218,12 +1218,12 @@ Expected: FAIL
 
 - [ ] **Step 3: Create DocumentParser with paragraph and run parsing**
 
-Create `src/main/java/cn/p4u/smart/parser/DocumentParser.java`:
+Create `src/main/java/cn/p4u/dth/parser/DocumentParser.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
-import cn.p4u.smart.model.*;
+import cn.p4u.dth.model.*;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -1273,7 +1273,7 @@ public final class DocumentParser {
             }
             return new DocumentModel(styles, Collections.unmodifiableList(content));
         } catch (Exception e) {
-            throw new cn.p4u.smart.DocxConversionException("Failed to parse document.xml", e);
+            throw new cn.p4u.dth.DocxConversionException("Failed to parse document.xml", e);
         }
     }
 
@@ -1532,7 +1532,7 @@ Expected: 5 tests PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/parser/DocumentParser.java src/test/java/cn/p4u/smart/parser/DocumentParserTest.java
+git add src/main/java/cn/p4u/dth/parser/DocumentParser.java src/test/java/cn/p4u/dth/parser/DocumentParserTest.java
 git commit -m "feat: add DocumentParser with paragraph, run, alignment, indentation parsing"
 ```
 
@@ -1541,15 +1541,15 @@ git commit -m "feat: add DocumentParser with paragraph, run, alignment, indentat
 ### Task 8: OmmlToLatexConverter
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/parser/OmmlToLatexConverter.java`
-- Create: `src/test/java/cn/p4u/smart/parser/OmmlToLatexConverterTest.java`
+- Create: `src/main/java/cn/p4u/dth/parser/OmmlToLatexConverter.java`
+- Create: `src/test/java/cn/p4u/dth/parser/OmmlToLatexConverterTest.java`
 
 - [ ] **Step 1: Write test for OMML → LaTeX conversion**
 
-Create `src/test/java/cn/p4u/smart/parser/OmmlToLatexConverterTest.java`:
+Create `src/test/java/cn/p4u/dth/parser/OmmlToLatexConverterTest.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
@@ -1622,10 +1622,10 @@ Expected: FAIL
 
 - [ ] **Step 3: Create OmmlToLatexConverter with recursive descent**
 
-Create `src/main/java/cn/p4u/smart/parser/OmmlToLatexConverter.java`:
+Create `src/main/java/cn/p4u/dth/parser/OmmlToLatexConverter.java`:
 
 ```java
-package cn.p4u.smart.parser;
+package cn.p4u.dth.parser;
 
 import org.w3c.dom.*;
 import java.util.logging.Logger;
@@ -1925,7 +1925,7 @@ Expected: 5 tests PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/parser/OmmlToLatexConverter.java src/test/java/cn/p4u/smart/parser/OmmlToLatexConverterTest.java
+git add src/main/java/cn/p4u/dth/parser/OmmlToLatexConverter.java src/test/java/cn/p4u/dth/parser/OmmlToLatexConverterTest.java
 git commit -m "feat: add OmmlToLatexConverter with recursive descent parsing"
 ```
 
@@ -1934,17 +1934,17 @@ git commit -m "feat: add OmmlToLatexConverter with recursive descent parsing"
 ### Task 9: StyleMapper
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/renderer/StyleMapper.java`
-- Create: `src/test/java/cn/p4u/smart/renderer/StyleMapperTest.java`
+- Create: `src/main/java/cn/p4u/dth/renderer/StyleMapper.java`
+- Create: `src/test/java/cn/p4u/dth/renderer/StyleMapperTest.java`
 
 - [ ] **Step 1: Write StyleMapper test**
 
-Create `src/test/java/cn/p4u/smart/renderer/StyleMapperTest.java`:
+Create `src/test/java/cn/p4u/dth/renderer/StyleMapperTest.java`:
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
-import cn.p4u.smart.model.*;
+import cn.p4u.dth.model.*;
 import org.junit.jupiter.api.Test;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
@@ -2015,12 +2015,12 @@ Expected: FAIL
 
 - [ ] **Step 3: Create StyleMapper**
 
-Create `src/main/java/cn/p4u/smart/renderer/StyleMapper.java`:
+Create `src/main/java/cn/p4u/dth/renderer/StyleMapper.java`:
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
-import cn.p4u.smart.model.*;
+import cn.p4u.dth.model.*;
 import java.util.*;
 
 public final class StyleMapper {
@@ -2152,7 +2152,7 @@ Expected: 5 tests PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/StyleMapper.java src/test/java/cn/p4u/smart/renderer/StyleMapperTest.java
+git add src/main/java/cn/p4u/dth/renderer/StyleMapper.java src/test/java/cn/p4u/dth/renderer/StyleMapperTest.java
 git commit -m "feat: add StyleMapper for docx properties to CSS inline style conversion"
 ```
 
@@ -2161,15 +2161,15 @@ git commit -m "feat: add StyleMapper for docx properties to CSS inline style con
 ### Task 10: ImageHandler
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/renderer/ImageHandler.java`
-- Create: `src/test/java/cn/p4u/smart/renderer/ImageHandlerTest.java`
+- Create: `src/main/java/cn/p4u/dth/renderer/ImageHandler.java`
+- Create: `src/test/java/cn/p4u/dth/renderer/ImageHandlerTest.java`
 
 - [ ] **Step 1: Write ImageHandler test**
 
-Create `src/test/java/cn/p4u/smart/renderer/ImageHandlerTest.java`:
+Create `src/test/java/cn/p4u/dth/renderer/ImageHandlerTest.java`:
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -2218,10 +2218,10 @@ Expected: FAIL
 
 - [ ] **Step 3: Create ImageHandler**
 
-Create `src/main/java/cn/p4u/smart/renderer/ImageHandler.java`:
+Create `src/main/java/cn/p4u/dth/renderer/ImageHandler.java`:
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -2274,7 +2274,7 @@ Expected: 3 tests PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/ImageHandler.java src/test/java/cn/p4u/smart/renderer/ImageHandlerTest.java
+git add src/main/java/cn/p4u/dth/renderer/ImageHandler.java src/test/java/cn/p4u/dth/renderer/ImageHandlerTest.java
 git commit -m "feat: add ImageHandler for base64 encoding and file copying"
 ```
 
@@ -2283,17 +2283,17 @@ git commit -m "feat: add ImageHandler for base64 encoding and file copying"
 ### Task 11: HtmlRenderer
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java`
-- Create: `src/test/java/cn/p4u/smart/renderer/HtmlRendererTest.java`
+- Create: `src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java`
+- Create: `src/test/java/cn/p4u/dth/renderer/HtmlRendererTest.java`
 
 - [ ] **Step 1: Write HtmlRenderer test**
 
-Create `src/test/java/cn/p4u/smart/renderer/HtmlRendererTest.java`:
+Create `src/test/java/cn/p4u/dth/renderer/HtmlRendererTest.java`:
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
-import cn.p4u.smart.model.*;
+import cn.p4u.dth.model.*;
 import org.junit.jupiter.api.Test;
 import java.nio.file.Paths;
 import java.util.List;
@@ -2395,10 +2395,10 @@ Expected: FAIL — HtmlRenderer and ConversionConfig don't exist
 
 - [ ] **Step 3: Create ConversionConfig**
 
-Create `src/main/java/cn/p4u/smart/converter/ConversionConfig.java`:
+Create `src/main/java/cn/p4u/dth/converter/ConversionConfig.java`:
 
 ```java
-package cn.p4u.smart.converter;
+package cn.p4u.dth.converter;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -2423,13 +2423,13 @@ public record ConversionConfig(
 
 - [ ] **Step 4: Create HtmlRenderer**
 
-Create `src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java`:
+Create `src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java`:
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
-import cn.p4u.smart.converter.ConversionConfig;
-import cn.p4u.smart.model.*;
+import cn.p4u.dth.converter.ConversionConfig;
+import cn.p4u.dth.model.*;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -2579,7 +2579,7 @@ Expected: 6 tests PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java src/main/java/cn/p4u/smart/converter/ConversionConfig.java src/test/java/cn/p4u/smart/renderer/HtmlRendererTest.java
+git add src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java src/main/java/cn/p4u/dth/converter/ConversionConfig.java src/test/java/cn/p4u/dth/renderer/HtmlRendererTest.java
 git commit -m "feat: add HtmlRenderer with paragraph, hyperlink, table, math, image rendering"
 ```
 
@@ -2588,18 +2588,18 @@ git commit -m "feat: add HtmlRenderer with paragraph, hyperlink, table, math, im
 ### Task 12: ConversionResult and DocxConverter (High-level API)
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/converter/ConversionResult.java`
-- Create: `src/main/java/cn/p4u/smart/converter/DocxConverter.java`
-- Create: `src/test/java/cn/p4u/smart/converter/DocxConverterTest.java`
+- Create: `src/main/java/cn/p4u/dth/converter/ConversionResult.java`
+- Create: `src/main/java/cn/p4u/dth/converter/DocxConverter.java`
+- Create: `src/test/java/cn/p4u/dth/converter/DocxConverterTest.java`
 
 - [ ] **Step 1: Write DocxConverter test**
 
-Create `src/test/java/cn/p4u/smart/converter/DocxConverterTest.java`:
+Create `src/test/java/cn/p4u/dth/converter/DocxConverterTest.java`:
 
 ```java
-package cn.p4u.smart.converter;
+package cn.p4u.dth.converter;
 
-import cn.p4u.smart.util.TestDocxBuilder;
+import cn.p4u.dth.util.TestDocxBuilder;
 import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
@@ -2635,13 +2635,13 @@ class DocxConverterTest {
             assertTrue(result.extractedDir().isPresent());
             assertTrue(java.nio.file.Files.exists(result.extractedDir().get()));
             // Clean up manually
-            cn.p4u.smart.extractor.DocxExtractor.cleanup(result.extractedDir().get());
+            cn.p4u.dth.extractor.DocxExtractor.cleanup(result.extractedDir().get());
         }
     }
 
     @Test
     void throwsForInvalidInput() {
-        assertThrows(cn.p4u.smart.DocxConversionException.class,
+        assertThrows(cn.p4u.dth.DocxConversionException.class,
                 () -> DocxConverter.convert(Path.of("/nonexistent.docx"), ConversionConfig.base64Defaults()));
     }
 }
@@ -2654,10 +2654,10 @@ Expected: FAIL
 
 - [ ] **Step 3: Create ConversionResult**
 
-Create `src/main/java/cn/p4u/smart/converter/ConversionResult.java`:
+Create `src/main/java/cn/p4u/dth/converter/ConversionResult.java`:
 
 ```java
-package cn.p4u.smart.converter;
+package cn.p4u.dth.converter;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -2670,16 +2670,16 @@ public record ConversionResult(
 
 - [ ] **Step 4: Create DocxConverter**
 
-Create `src/main/java/cn/p4u/smart/converter/DocxConverter.java`:
+Create `src/main/java/cn/p4u/dth/converter/DocxConverter.java`:
 
 ```java
-package cn.p4u.smart.converter;
+package cn.p4u.dth.converter;
 
-import cn.p4u.smart.DocxConversionException;
-import cn.p4u.smart.extractor.DocxExtractor;
-import cn.p4u.smart.model.DocumentModel;
-import cn.p4u.smart.parser.DocumentParser;
-import cn.p4u.smart.renderer.HtmlRenderer;
+import cn.p4u.dth.DocxConversionException;
+import cn.p4u.dth.extractor.DocxExtractor;
+import cn.p4u.dth.model.DocumentModel;
+import cn.p4u.dth.parser.DocumentParser;
+import cn.p4u.dth.renderer.HtmlRenderer;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -2718,7 +2718,7 @@ Expected: 3 tests PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/converter/ src/test/java/cn/p4u/smart/converter/
+git add src/main/java/cn/p4u/dth/converter/ src/test/java/cn/p4u/dth/converter/
 git commit -m "feat: add DocxConverter high-level API with ConversionResult and ConversionConfig"
 ```
 
@@ -2727,19 +2727,19 @@ git commit -m "feat: add DocxConverter high-level API with ConversionResult and 
 ### Task 13: CLI Entry Point
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/cli/CliRunner.java`
+- Create: `src/main/java/cn/p4u/dth/cli/CliRunner.java`
 
 - [ ] **Step 1: Create CliRunner with picocli**
 
-Create `src/main/java/cn/p4u/smart/cli/CliRunner.java`:
+Create `src/main/java/cn/p4u/dth/cli/CliRunner.java`:
 
 ```java
-package cn.p4u.smart.cli;
+package cn.p4u.dth.cli;
 
-import cn.p4u.smart.converter.ConversionConfig;
-import cn.p4u.smart.converter.ConversionConfig.ImageMode;
-import cn.p4u.smart.converter.ConversionResult;
-import cn.p4u.smart.converter.DocxConverter;
+import cn.p4u.dth.converter.ConversionConfig;
+import cn.p4u.dth.converter.ConversionConfig.ImageMode;
+import cn.p4u.dth.converter.ConversionResult;
+import cn.p4u.dth.converter.DocxConverter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -2810,13 +2810,13 @@ Expected: BUILD SUCCESS
 
 - [ ] **Step 3: Test CLI help**
 
-Run: `mvn exec:java -Dexec.mainClass="cn.p4u.smart.cli.CliRunner" -Dexec.args="--help" 2>/dev/null || java -cp target/classes:$(mvn dependency:build-classpath -Dmdep.outputFile=/dev/stdout -q) cn.p4u.smart.cli.CliRunner --help 2>/dev/null || echo "CLI compiles; runtime test requires full build"`
+Run: `mvn exec:java -Dexec.mainClass="cn.p4u.dth.cli.CliRunner" -Dexec.args="--help" 2>/dev/null || java -cp target/classes:$(mvn dependency:build-classpath -Dmdep.outputFile=/dev/stdout -q) cn.p4u.dth.cli.CliRunner --help 2>/dev/null || echo "CLI compiles; runtime test requires full build"`
 Expected: Help text shows options
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/cli/CliRunner.java
+git add src/main/java/cn/p4u/dth/cli/CliRunner.java
 git commit -m "feat: add picocli-based CLI entry point"
 ```
 
@@ -2825,19 +2825,19 @@ git commit -m "feat: add picocli-based CLI entry point"
 ### Task 14: Integration Test with Full Pipeline
 
 **Files:**
-- Create: `src/test/java/cn/p4u/smart/integration/FullPipelineTest.java`
+- Create: `src/test/java/cn/p4u/dth/integration/FullPipelineTest.java`
 
 - [ ] **Step 1: Write integration tests**
 
-Create `src/test/java/cn/p4u/smart/integration/FullPipelineTest.java`:
+Create `src/test/java/cn/p4u/dth/integration/FullPipelineTest.java`:
 
 ```java
-package cn.p4u.smart.integration;
+package cn.p4u.dth.integration;
 
-import cn.p4u.smart.converter.ConversionConfig;
-import cn.p4u.smart.converter.DocxConverter;
-import cn.p4u.smart.converter.ConversionResult;
-import cn.p4u.smart.util.TestDocxBuilder;
+import cn.p4u.dth.converter.ConversionConfig;
+import cn.p4u.dth.converter.DocxConverter;
+import cn.p4u.dth.converter.ConversionResult;
+import cn.p4u.dth.util.TestDocxBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -2953,7 +2953,7 @@ Expected: All tests PASS
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/test/java/cn/p4u/smart/integration/
+git add src/test/java/cn/p4u/dth/integration/
 git commit -m "test: add full pipeline integration tests"
 ```
 

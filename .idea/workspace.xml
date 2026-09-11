@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="4a1bd76c-0092-4eec-a32c-530ce1f0da49" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/deploy-example.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/deploy.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build-exe.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/plans/2026-05-28-docx-to-html.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/superpowers/plans/2026-05-28-docx-to-html.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/plans/2026-06-11-gui-runner.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/superpowers/plans/2026-06-11-gui-runner.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/plans/2026-07-28-image-uri-resolver.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/superpowers/plans/2026-07-28-image-uri-resolver.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/plans/2026-07-28-jdk21-upgrade.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/superpowers/plans/2026-07-28-jdk21-upgrade.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/specs/2026-06-11-gui-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/superpowers/specs/2026-06-11-gui-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/specs/2026-07-28-image-uri-resolver-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/superpowers/specs/2026-07-28-image-uri-resolver-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/specs/2026-07-28-jdk21-upgrade-design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/superpowers/specs/2026-07-28-jdk21-upgrade-design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/DocxConversionException.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/converter/ConversionConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/converter/DocxConverter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/extractor/DocxExtractor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/extractor/ExtractedDocx.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/gui/GuiRunner.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/BorderSpec.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/ContentBlock.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/DocumentModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/FontSpec.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/HyperlinkElement.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/ImageElement.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/Indentation.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/MathElement.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/ParagraphBlock.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/ParagraphElement.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/ShapeElement.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/StyleDef.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/TableBlock.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/TableCell.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/TableRow.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/TextRun.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/ThemeDef.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/model/WrapMode.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/DocumentParser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/NumberingParser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/OmmlToLatexConverter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/OmmlToMathmlConverter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/RelsParser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/SecureXmlDocuments.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/StylesParser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/parser/ThemeParser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/AdjacentSpanProcessor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/DisabledWmfRasterizer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/FigureCaptionProcessor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/HtmlEscaper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/Image2Base64Resolver.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/Image2OssResolver.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/ImageHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/ImageMagickWmfRasterizer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/ImageUriResolver.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/MathHtmlRenderer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/PowerShellWmfRasterizer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/StyleMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/WmfConversionStrategy.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/WmfConverter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/WmfRasterizer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/p4u/smart/renderer/WmfRasterizerFactory.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/DocxConversionExceptionTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/PublicDocxConvertTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/converter/ConversionConfigTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/converter/DocxConverterTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/extractor/DocxExtractorTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/gui/GuiRunnerTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/integration/FullPipelineTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/model/ModelTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/parser/DocumentParserTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/parser/OmmlToLatexConverterTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/parser/OmmlToMathmlConverterTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/parser/RelsParserTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/parser/SecureXmlDocumentsTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/parser/StylesParserTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/parser/ThemeParserTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/renderer/AdjacentSpanProcessorTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/renderer/FigureCaptionProcessorTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/renderer/HtmlRendererTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/renderer/Image2Base64ResolverTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/renderer/MathHtmlRendererTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/renderer/StyleMapperTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/renderer/WmfConverterTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/p4u/smart/util/TestDocxBuilder.java" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="3J8Iiy5BxmZyGBb8p0l6oAGzfgn" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JUnit.PublicDocxConvertTest.convertsInputStreamToHtmlStrTest (1).executor": "Run",
+    "JUnit.PublicDocxConvertTest.convertsInputStreamToHtmlStrTest.executor": "Debug",
+    "Maven.docx-to-html [clean].executor": "Run",
+    "Maven.docx-to-html [compile].executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/DevCode/kaiwu/elearning-platform",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager" selected="JUnit.PublicDocxConvertTest.convertsInputStreamToHtmlStrTest (1)">
+    <configuration name="PublicDocxConvertTest.convertsInputStreamToHtmlStrTest (1)" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="docx-to-html" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="cn.p4u.dth.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="cn.p4u.dth" />
+      <option name="MAIN_CLASS_NAME" value="cn.p4u.dth.PublicDocxConvertTest" />
+      <option name="METHOD_NAME" value="convertsInputStreamToHtmlStrTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PublicDocxConvertTest.convertsInputStreamToHtmlStrTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="docx-to-html" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="cn.p4u.smart.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="cn.p4u.smart" />
+      <option name="MAIN_CLASS_NAME" value="cn.p4u.smart.PublicDocxConvertTest" />
+      <option name="METHOD_NAME" value="convertsInputStreamToHtmlStrTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="docxToHtml4j" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="docxToHtml4j" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.PublicDocxConvertTest.convertsInputStreamToHtmlStrTest (1)" />
+        <item itemvalue="JUnit.PublicDocxConvertTest.convertsInputStreamToHtmlStrTest" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-84258761d1cc-intellij.indexing.shared.core-IU-243.28141.41" />
+        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-IU-243.28141.41" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4a1bd76c-0092-4eec-a32c-530ce1f0da49" name="Changes" comment="" />
+      <created>1789036399992</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1789036399992</updated>
+      <workItem from="1789036401097" duration="5945000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

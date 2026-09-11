@@ -23,7 +23,7 @@ Upgrade the project from JDK 8 to JDK 21, remove JDK 8 compatibility shim (`Jdk8
 
 ### 2. Delete Jdk8Helpers.java
 
-Remove `src/main/java/cn/p4u/smart/util/Jdk8Helpers.java` entirely.
+Remove `src/main/java/cn/p4u/dth/util/Jdk8Helpers.java` entirely.
 
 ### 3. Replace call sites
 
@@ -34,7 +34,7 @@ Remove `src/main/java/cn/p4u/smart/util/Jdk8Helpers.java` entirely.
 | `Jdk8Helpers.transferTo(in, out)` | `in.transferTo(out)` | WmfConverter |
 | `Jdk8Helpers.nullOutputStream()` | `OutputStream.nullOutputStream()` | WmfConverter |
 
-Also remove all `import cn.p4u.smart.util.Jdk8Helpers` lines and add `import java.io.OutputStream` to WmfConverter.
+Also remove all `import cn.p4u.dth.util.Jdk8Helpers` lines and add `import java.io.OutputStream` to WmfConverter.
 
 ### 4. Documentation
 

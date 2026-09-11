@@ -12,7 +12,7 @@ export JAVA_HOME=/c/DevRepo/jdk/dragonwell-21.0.6.0.6+7-GA
 - **Build:** `mvn compile`
 - **All tests:** `mvn test`
 - **Single test class:** `mvn test -Dtest=DocumentParserTest`
-- **Run Swing GUI:** `mvn exec:java -Dexec.mainClass="cn.p4u.smart.gui.GuiRunner"`
+- **Run Swing GUI:** `mvn exec:java -Dexec.mainClass="cn.p4u.dth.gui.GuiRunner"`
 - **Build Windows app image:** `build-exe.bat` (or `mvn -Pnative package` with JDK 21 configured)
 
 On PowerShell, set the environment variable with:
@@ -34,7 +34,7 @@ Three-phase pipeline where each stage produces a standalone, testable output:
           (unzip)         (XML→model)      (model→HTML)
 ```
 
-**High-level entry point:** `DocxConverter.convert(InputStream, ConversionConfig)` chains all three stages and returns the HTML string. Convenience overloads accept an `ImageUriResolver` directly or use the default Base64 resolver. `ConversionConfig.tmpDir()` selects a temporary-directory root; each extraction uses a unique `docx2html-*` child. The converter consumes but does not close the caller-owned stream. `ExtractedDocx` makes the generated child AutoCloseable, so the pipeline cleans it on success and failure. Prefer `ConversionConfig.builder()` when several optional settings are needed.
+**High-level entry point:** `DocxConverter.convert(InputStream, ConversionConfig)` chains all three stages and returns the HTML string. The three-argument overload accepts `FileParseCallback<ContentBlock>` and synchronously reports each successfully parsed top-level paragraph/table. `total` excludes non-content body nodes such as `sectPr`; `onComplete` runs only after HTML rendering succeeds, and `onError` runs once on failure. Convenience overloads accept an `ImageUriResolver` directly or use the default Base64 resolver. `ConversionConfig.tmpDir()` selects a temporary-directory root; each extraction uses a unique `docx2html-*` child. The converter consumes but does not close the caller-owned stream. `ExtractedDocx` makes the generated child AutoCloseable, so the pipeline cleans it on success and failure. Prefer `ConversionConfig.builder()` when several optional settings are needed.
 
 **Refactoring patterns:** `DocxConverter` and `WmfConverter` are facades; `ConversionConfig.Builder` handles optional parameters; `ImageUriResolver` and `WmfRasterizer` are strategies; `WmfRasterizerFactory` selects WMF implementations; `MathHtmlRenderer` is an ordered responsibility chain; `SecureXmlDocuments` centralizes secure DOM construction. See `DESIGN_PATTERNS.md` for the beginner-oriented guide.
 
@@ -59,7 +59,7 @@ DocumentModel
         ├── ParagraphBlock (styleId, alignment, outlineLvl, indentation, numId, ilvl, elements)
         │     ├── TextRun      (FontSpec, text, highlight, shading, superscript/subscript)
         │     ├── ImageElement (mediaPath, mime, width, height, wrapMode, altText)
-        │     ├── MathElement  (latex, mathml, imagePath)
+        │     ├── MathElement  (latex, mathml, imagePath, width, height)
         │     ├── HyperlinkElement (url, runs: List<TextRun>)
         │     └── ShapeElement  (svg, width, height, children: List<ShapeElement>)  — recursive for groups
         └── TableBlock (rows, borders, insideH/V, visibility)
@@ -97,6 +97,10 @@ DocumentModel
 **Hyperlinks:** Hardcoded `color: #0563C1; text-decoration: underline;` (Word default blue). Null/empty URLs render as plain text.
 
 **Math rendering cascade:**
+
+Before attaching legacy OLE LaTeX, FormulaPreviewConsistency checks readable digits from standard-font WMF text records against the extracted expression. A digit present only in the preview indicates stale/mismatched native data: omit data-latex, warn, and preserve the preview. This is a limited conflict detector, not OCR or proof of formula equivalence; unknown formats/fonts and unreadable previews retain the existing extraction behavior.
+
+Editable legacy OLE equations: DocumentParser reads the related package-local OLE object through OleEquationLatex (POI compound-file reader). MtefLatexConverter supports a conservative subset of MTEF 3/5: text, scripts, fractions, roots, fences, bars, sums/products, piles and matrices. Successfully converted LaTeX is attached to the existing formula preview image as data-latex; unsupported or malformed data leaves the image unchanged and omits the attribute. This reconstructs LaTeX from MTEF, not the original author's LaTeX source. No OLE object is activated or executed.
 1. `imagePath` exists → base64 `<img>` with `data-latex` for MathJax
 2. `mathml` exists → inline MathML XML
 3. `latexRenderUrl` configured → online service URL
@@ -153,6 +157,7 @@ All OOXML DOM parsing must go through `SecureXmlDocuments.parse()`, which disabl
 ## Dependencies
 
 Direct runtime dependencies:
+- **poi 5.5.1** — read editable OLE equations' Equation Native streams (no Word or MathType installation required)
 - **jsoup 1.22.1** — HTML tree processing for adjacent image captions (`FigureCaptionProcessor`)
 - **aliyun-sdk-oss 3.17.4** — Aliyun OSS image resolver implementation
 
@@ -161,7 +166,7 @@ One test dependency:
 
 ## Testing
 
-Tests use `TestDocxBuilder` (in `src/test/java/cn/p4u/smart/util/`) to programmatically construct valid .docx ZIP files. It implements `AutoCloseable` and cleans up the `.docx` temp file on close. The extracted directory is cleaned up by `DocxExtractor.cleanup()` in test `finally` blocks. Supports `addContentTypes()`, `addRels()`, `addDocument()`, `addDocumentRels()`, `addStyles()`, `addTheme()`, and `addMedia()`.
+Tests use `TestDocxBuilder` (in `src/test/java/cn/p4u/dth/util/`) to programmatically construct valid .docx ZIP files. It implements `AutoCloseable` and cleans up the `.docx` temp file on close. The extracted directory is cleaned up by `DocxExtractor.cleanup()` in test `finally` blocks. Supports `addContentTypes()`, `addRels()`, `addDocument()`, `addDocumentRels()`, `addStyles()`, `addTheme()`, and `addMedia()`.
 
 ## Packaging (Windows exe)
 

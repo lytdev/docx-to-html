@@ -10,11 +10,11 @@
 
 ## Global Constraints
 
-- `ImageUriResolver` interface must be in `cn.p4u.smart.renderer` package (not parser)
+- `ImageUriResolver` interface must be in `cn.p4u.dth.renderer` package (not parser)
 - `resolve(Path imagePath, String mimeType)` returns `ResolveResult(uri, mimeType)`
 - WMF/EMF conversion is a shared pre-step before resolvers are called — resolvers don't handle it
 - Math formula images (`renderMath`) are NOT changed by this refactoring
-- Preexisting stubs in `cn.p4u.smart.parser` package must be deleted
+- Preexisting stubs in `cn.p4u.dth.parser` package must be deleted
 - All existing tests must pass after the refactoring
 - `ImageHandler` shrinks — `toBase64DataUri` and `copyToDir` logic moves out; WMF helpers stay
 
@@ -23,10 +23,10 @@
 ### Task 1: Delete old parser stubs + Create ImageUriResolver interface + ResolveResult
 
 **Files:**
-- Delete: `src/main/java/cn/p4u/smart/parser/ImageUriResolver.java`
-- Delete: `src/main/java/cn/p4u/smart/parser/Image2Base64Resolver.java`
-- Delete: `src/main/java/cn/p4u/smart/parser/Image2OssResolver.java`
-- Create: `src/main/java/cn/p4u/smart/renderer/ImageUriResolver.java`
+- Delete: `src/main/java/cn/p4u/dth/parser/ImageUriResolver.java`
+- Delete: `src/main/java/cn/p4u/dth/parser/Image2Base64Resolver.java`
+- Delete: `src/main/java/cn/p4u/dth/parser/Image2OssResolver.java`
+- Create: `src/main/java/cn/p4u/dth/renderer/ImageUriResolver.java`
 
 **Interfaces:**
 - Consumes: nothing
@@ -35,13 +35,13 @@
 - [ ] **Step 1: Remove old stubs from parser package**
 
 ```bash
-git rm src/main/java/cn/p4u/smart/parser/ImageUriResolver.java src/main/java/cn/p4u/smart/parser/Image2Base64Resolver.java src/main/java/cn/p4u/smart/parser/Image2OssResolver.java
+git rm src/main/java/cn/p4u/dth/parser/ImageUriResolver.java src/main/java/cn/p4u/dth/parser/Image2Base64Resolver.java src/main/java/cn/p4u/dth/parser/Image2OssResolver.java
 ```
 
 - [ ] **Step 2: Create ImageUriResolver.java in renderer package**
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -89,7 +89,7 @@ mvn compile
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/ImageUriResolver.java
+git add src/main/java/cn/p4u/dth/renderer/ImageUriResolver.java
 git commit -m "refactor: move ImageUriResolver to renderer package, redesign interface
 - Delete parser-package stubs (old InputStream-based API)
 - New resolve(Path, String) returns ResolveResult record
@@ -101,7 +101,7 @@ git commit -m "refactor: move ImageUriResolver to renderer package, redesign int
 ### Task 2: Create Image2Base64Resolver
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/renderer/Image2Base64Resolver.java`
+- Create: `src/main/java/cn/p4u/dth/renderer/Image2Base64Resolver.java`
 - Delete: no test for this yet (covered in Task 10)
 
 **Interfaces:**
@@ -111,7 +111,7 @@ git commit -m "refactor: move ImageUriResolver to renderer package, redesign int
 - [ ] **Step 1: Create the class**
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -143,7 +143,7 @@ mvn compile
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/Image2Base64Resolver.java
+git add src/main/java/cn/p4u/dth/renderer/Image2Base64Resolver.java
 git commit -m "feat: add Image2Base64Resolver — base64 data URI resolver"
 ```
 
@@ -153,7 +153,7 @@ git commit -m "feat: add Image2Base64Resolver — base64 data URI resolver"
 
 **Files:**
 - Modify: `pom.xml` — add aliyun-sdk-oss dependency
-- Create: `src/main/java/cn/p4u/smart/renderer/Image2OssResolver.java`
+- Create: `src/main/java/cn/p4u/dth/renderer/Image2OssResolver.java`
 
 **Interfaces:**
 - Consumes: `ImageUriResolver` interface, `ResolveResult` record (Task 1)
@@ -181,7 +181,7 @@ Expected: aliyun-sdk-oss resolves without errors.
 - [ ] **Step 3: Create Image2OssResolver**
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
@@ -252,7 +252,7 @@ mvn compile
 - [ ] **Step 5: Commit**
 
 ```bash
-git add pom.xml src/main/java/cn/p4u/smart/renderer/Image2OssResolver.java
+git add pom.xml src/main/java/cn/p4u/dth/renderer/Image2OssResolver.java
 git commit -m "feat: add Image2OssResolver — Aliyun OSS image upload resolver"
 ```
 
@@ -261,7 +261,7 @@ git commit -m "feat: add Image2OssResolver — Aliyun OSS image upload resolver"
 ### Task 4: Refactor ConversionConfig — replace ImageMode with ImageUriResolver
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/converter/ConversionConfig.java`
+- Modify: `src/main/java/cn/p4u/dth/converter/ConversionConfig.java`
 
 **Interfaces:**
 - Consumes: `ImageUriResolver`, `ResolveResult` (Task 1)
@@ -272,9 +272,9 @@ git commit -m "feat: add Image2OssResolver — Aliyun OSS image upload resolver"
 Remove `ImageMode` enum entirely. Replace `imageMode` + `imageOutputDir` fields with `ImageUriResolver imageUriResolver`. Update both constructors, getters, `equals`/`hashCode`/`toString`, and factory methods.
 
 ```java
-package cn.p4u.smart.converter;
+package cn.p4u.dth.converter;
 
-import cn.p4u.smart.renderer.ImageUriResolver;
+import cn.p4u.dth.renderer.ImageUriResolver;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -306,7 +306,7 @@ public final class ConversionConfig {
 
     /** Convenience factory with Image2Base64Resolver as default. */
     public static ConversionConfig defaults() {
-        return new ConversionConfig(new cn.p4u.smart.renderer.Image2Base64Resolver(), null, false);
+        return new ConversionConfig(new cn.p4u.dth.renderer.Image2Base64Resolver(), null, false);
     }
 
     @Override
@@ -339,7 +339,7 @@ Note: At this point `ConversionConfig` will NOT compile because callers still re
 - [ ] **Step 2: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/converter/ConversionConfig.java
+git add src/main/java/cn/p4u/dth/converter/ConversionConfig.java
 git commit -m "refactor: replace ImageMode with ImageUriResolver in ConversionConfig
 BREAKING: imageMode()/imageOutputDir() removed. Callers must adapt."
 ```
@@ -349,7 +349,7 @@ BREAKING: imageMode()/imageOutputDir() removed. Callers must adapt."
 ### Task 5: Refactor HtmlRenderer — integrate ImageUriResolver
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java`
+- Modify: `src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java`
 
 **Interfaces:**
 - Consumes: `ConversionConfig.imageUriResolver()` (Task 4), `ImageUriResolver.resolve()` (Task 1), `WmfConverter`, `ImageHandler.isWmfOrEmf` (existing)
@@ -437,7 +437,7 @@ Expected: Only failures are from other callers that still reference `ImageMode`/
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java
+git add src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java
 git commit -m "refactor: integrate ImageUriResolver in HtmlRenderer.renderImage()
 - Replace ImageMode branch with single resolver.resolve() call
 - Extract WMF/EMF->PNG as shared pre-step before resolve()"
@@ -448,7 +448,7 @@ git commit -m "refactor: integrate ImageUriResolver in HtmlRenderer.renderImage(
 ### Task 6: Refactor DocxConverter — pass resolver through effectiveConfig
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/converter/DocxConverter.java`
+- Modify: `src/main/java/cn/p4u/dth/converter/DocxConverter.java`
 
 **Interfaces:**
 - Consumes: `ConversionConfig` new constructor (Task 4)
@@ -485,7 +485,7 @@ Expected: Only failures from CliRunner and GuiRunner remain. DocxConverter now c
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/converter/DocxConverter.java
+git add src/main/java/cn/p4u/dth/converter/DocxConverter.java
 git commit -m "refactor: pass ImageUriResolver through DocxConverter effectiveConfig"
 ```
 
@@ -494,7 +494,7 @@ git commit -m "refactor: pass ImageUriResolver through DocxConverter effectiveCo
 ### Task 7: Shrink ImageHandler — remove toBase64DataUri and copyToDir
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/renderer/ImageHandler.java`
+- Modify: `src/main/java/cn/p4u/dth/renderer/ImageHandler.java`
 
 **Interfaces:**
 - Consumes: nothing new
@@ -524,7 +524,7 @@ mvn compile
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/ImageHandler.java
+git add src/main/java/cn/p4u/dth/renderer/ImageHandler.java
 git commit -m "refactor: shrink ImageHandler — remove base64/copy logic now in resolvers"
 ```
 
@@ -533,7 +533,7 @@ git commit -m "refactor: shrink ImageHandler — remove base64/copy logic now in
 ### Task 8: Update CliRunner — new resolver flags
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/cli/CliRunner.java`
+- Modify: `src/main/java/cn/p4u/dth/cli/CliRunner.java`
 
 **Interfaces:**
 - Consumes: `ConversionConfig` new constructor (Task 4), `Image2Base64Resolver`, `Image2OssResolver`
@@ -575,7 +575,7 @@ Add:
 
 Remove:
 ```java
-import cn.p4u.smart.converter.ConversionConfig.ImageMode;
+import cn.p4u.dth.converter.ConversionConfig.ImageMode;
 ...
         ImageMode mode = "link".equalsIgnoreCase(imageMode) ? ImageMode.LINK : ImageMode.BASE64;
         ConversionConfig config = new ConversionConfig(mode, Paths.get(imageDir), null, keepTemp);
@@ -583,8 +583,8 @@ import cn.p4u.smart.converter.ConversionConfig.ImageMode;
 
 Add:
 ```java
-import cn.p4u.smart.renderer.Image2Base64Resolver;
-import cn.p4u.smart.renderer.Image2OssResolver;
+import cn.p4u.dth.renderer.Image2Base64Resolver;
+import cn.p4u.dth.renderer.Image2OssResolver;
 ...
         ImageUriResolver resolver;
         if ("oss".equalsIgnoreCase(imageResolver)) {
@@ -612,7 +612,7 @@ Expected: Only GuiRunner and test compilation failures remain. CliRunner now com
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/cli/CliRunner.java
+git add src/main/java/cn/p4u/dth/cli/CliRunner.java
 git commit -m "feat: replace --image-mode with --image-resolver in CliRunner
 Support base64 (default) and oss resolver with --oss-* flags"
 ```
@@ -622,7 +622,7 @@ Support base64 (default) and oss resolver with --oss-* flags"
 ### Task 9: Update GuiRunner — adapt to new ConversionConfig
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/gui/GuiRunner.java`
+- Modify: `src/main/java/cn/p4u/dth/gui/GuiRunner.java`
 
 **Interfaces:**
 - Consumes: `ConversionConfig.defaults()` (Task 4)
@@ -639,7 +639,7 @@ to:
                 return DocxConverter.convert(selectedFile, ConversionConfig.defaults());
 ```
 
-Remove `import cn.p4u.smart.converter.ConversionConfig.ImageMode` if present (not present in current code — GuiRunner doesn't import ImageMode).
+Remove `import cn.p4u.dth.converter.ConversionConfig.ImageMode` if present (not present in current code — GuiRunner doesn't import ImageMode).
 
 - [ ] **Step 2: Verify compilation**
 
@@ -651,7 +651,7 @@ Expected: BUILD SUCCESS — all main source files compile. Only test compilation
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/gui/GuiRunner.java
+git add src/main/java/cn/p4u/dth/gui/GuiRunner.java
 git commit -m "refactor: adapt GuiRunner to new ConversionConfig.defaults()"
 ```
 
@@ -660,11 +660,11 @@ git commit -m "refactor: adapt GuiRunner to new ConversionConfig.defaults()"
 ### Task 10: Update tests
 
 **Files:**
-- Modify: `src/test/java/cn/p4u/smart/renderer/ImageHandlerTest.java` — remove copyToDir test
-- Modify: `src/test/java/cn/p4u/smart/converter/DocxConverterTest.java` — adapt constructor
-- Modify: `src/test/java/cn/p4u/smart/renderer/HtmlRendererTest.java` — adapt ConversionConfig usage
-- Modify: `src/test/java/cn/p4u/smart/CliConvertTest.java` — adapt if needed
-- Modify: `src/test/java/cn/p4u/smart/integration/FullPipelineTest.java` — adapt ConversionConfig usage
+- Modify: `src/test/java/cn/p4u/dth/renderer/ImageHandlerTest.java` — remove copyToDir test
+- Modify: `src/test/java/cn/p4u/dth/converter/DocxConverterTest.java` — adapt constructor
+- Modify: `src/test/java/cn/p4u/dth/renderer/HtmlRendererTest.java` — adapt ConversionConfig usage
+- Modify: `src/test/java/cn/p4u/dth/CliConvertTest.java` — adapt if needed
+- Modify: `src/test/java/cn/p4u/dth/integration/FullPipelineTest.java` — adapt ConversionConfig usage
 
 **Interfaces:**
 - Consumes: all completed tasks
@@ -677,7 +677,7 @@ Remove the `copiesImageToOutputDir` test (lines 31-39) — `copyToDir` no longer
 The `base64EncodesImage` test — `ImageHandler.toBase64DataUri` no longer exists. Replace it with a test for `Image2Base64Resolver`:
 
 ```java
-package cn.p4u.smart.renderer;
+package cn.p4u.dth.renderer;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -730,7 +730,7 @@ Change from:
 To:
 ```java
             ConversionConfig config = new ConversionConfig(
-                    new cn.p4u.smart.renderer.Image2Base64Resolver(),
+                    new cn.p4u.dth.renderer.Image2Base64Resolver(),
                     extractedDir,
                     false
             );
@@ -748,7 +748,7 @@ At line 21: Replace:
 ```
 With (inline the resolver construction):
 ```java
-    cn.p4u.smart.renderer.Image2Base64Resolver resolver = new cn.p4u.smart.renderer.Image2Base64Resolver();
+    cn.p4u.dth.renderer.Image2Base64Resolver resolver = new cn.p4u.dth.renderer.Image2Base64Resolver();
 ```
 
 And at line 23: Replace:
@@ -785,7 +785,7 @@ git commit -m "test: update tests for ImageUriResolver refactoring"
 ### Task 11: Cleanup — remove ImageHandler import from HtmlRenderer if stale
 
 **Files:**
-- Verify: `src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java`
+- Verify: `src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java`
 
 - [ ] **Step 1: Check for dead imports in HtmlRenderer**
 
@@ -801,6 +801,6 @@ Expected: BUILD SUCCESS, 105/106 pass.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/main/java/cn/p4u/smart/renderer/HtmlRenderer.java
+git add src/main/java/cn/p4u/dth/renderer/HtmlRenderer.java
 git commit -m "chore: clean up unused imports in HtmlRenderer"
 ```

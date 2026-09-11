@@ -6,7 +6,7 @@
 
 ## 架构
 
-新增 `cn.p4u.smart.gui.GuiRunner` 类，与 `CliRunner` 平级。`GuiRunner` 继承 `JFrame`，内部调用 `DocxConverter.convert()` ——不对现有管道代码做任何修改。
+新增 `cn.p4u.dth.gui.GuiRunner` 类，与 `CliRunner` 平级。`GuiRunner` 继承 `JFrame`，内部调用 `DocxConverter.convert()` ——不对现有管道代码做任何修改。
 
 ```
 GuiRunner (JFrame)
@@ -68,7 +68,7 @@ GuiRunner (JFrame)
 
 新增 Maven profile `native`，使用 `org.graalvm.buildtools:native-maven-plugin`：
 - 输出：`target/docx2html.exe`
-- mainClass：`cn.p4u.smart.gui.GuiRunner`
+- mainClass：`cn.p4u.dth.gui.GuiRunner`
 - 需要 reachability metadata 配置文件：
   - `reflect-config.json`（Swing 类反射）
   - `resource-config.json`（图标等资源）
@@ -87,7 +87,7 @@ GuiRunner (JFrame)
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/main/java/cn/p4u/smart/gui/GuiRunner.java` | 新增 | Swing 主窗口，含所有 GUI 逻辑 |
+| `src/main/java/cn/p4u/dth/gui/GuiRunner.java` | 新增 | Swing 主窗口，含所有 GUI 逻辑 |
 | `src/main/resources/META-INF/native-image/reflect-config.json` | 新增 | GraalVM 反射配置 |
 | `src/main/resources/META-INF/native-image/resource-config.json` | 新增 | GraalVM 资源配置 |
 | `pom.xml` | 修改 | 新增 `native` Maven profile |

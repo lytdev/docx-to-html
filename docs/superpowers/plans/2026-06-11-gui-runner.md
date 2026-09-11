@@ -4,7 +4,7 @@
 
 **Goal:** 为 docxToHtml4j 添加 Swing GUI 界面，经典表单布局，可打包为 GraalVM Native Image exe。
 
-**Architecture:** 新增 `cn.p4u.smart.gui.GuiRunner` 类继承 JFrame，内部使用 SwingWorker 执行转换。输出路径计算抽取为可测试的静态方法。GraalVM 打包通过 Maven profile `native` 实现，不影响常规构建。
+**Architecture:** 新增 `cn.p4u.dth.gui.GuiRunner` 类继承 JFrame，内部使用 SwingWorker 执行转换。输出路径计算抽取为可测试的静态方法。GraalVM 打包通过 Maven profile `native` 实现，不影响常规构建。
 
 **Tech Stack:** Java 8 Swing, SwingWorker, JFileChooser, Desktop.open(), GraalVM Native Maven Plugin
 
@@ -13,15 +13,15 @@
 ### Task 1: 输出路径计算逻辑
 
 **Files:**
-- Create: `src/main/java/cn/p4u/smart/gui/GuiRunner.java`
-- Create: `src/test/java/cn/p4u/smart/gui/GuiRunnerTest.java`
+- Create: `src/main/java/cn/p4u/dth/gui/GuiRunner.java`
+- Create: `src/test/java/cn/p4u/dth/gui/GuiRunnerTest.java`
 
 这段逻辑是纯函数，独立于 GUI 组件，先写测试确保正确性。
 
 - [ ] **Step 1: 写失败测试**
 
 ```java
-package cn.p4u.smart.gui;
+package cn.p4u.dth.gui;
 
 import org.junit.jupiter.api.Test;
 
@@ -70,7 +70,7 @@ Expected: FAIL — `GuiRunner` 类不存在
 - [ ] **Step 3: 写最小实现**
 
 ```java
-package cn.p4u.smart.gui;
+package cn.p4u.dth.gui;
 
 import java.nio.file.Path;
 
@@ -118,7 +118,7 @@ Expected: PASS — 4 tests
 
 ```bash
 cd C:\DevCode\agile-hub\docxToHtml4j
-git add src/main/java/cn/p4u/smart/gui/GuiRunner.java src/test/java/cn/p4u/smart/gui/GuiRunnerTest.java
+git add src/main/java/cn/p4u/dth/gui/GuiRunner.java src/test/java/cn/p4u/dth/gui/GuiRunnerTest.java
 git commit -m "feat(gui): add deriveOutputPath logic with tests"
 ```
 
@@ -127,7 +127,7 @@ git commit -m "feat(gui): add deriveOutputPath logic with tests"
 ### Task 2: GUI 窗口框架与布局
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/gui/GuiRunner.java`
+- Modify: `src/main/java/cn/p4u/dth/gui/GuiRunner.java`
 
 在 GuiRunner 中添加 JFrame 子类、窗口属性、组件布局。此步骤只搭建框架，不做事件绑定。
 
@@ -136,12 +136,12 @@ git commit -m "feat(gui): add deriveOutputPath logic with tests"
 在 `GuiRunner.java` 中，将现有的私有构造函数替换为 JFrame 子类：
 
 ```java
-package cn.p4u.smart.gui;
+package cn.p4u.dth.gui;
 
-import cn.p4u.smart.converter.ConversionConfig;
-import cn.p4u.smart.converter.ConversionResult;
-import cn.p4u.smart.converter.DocxConverter;
-import cn.p4u.smart.util.Jdk8Helpers;
+import cn.p4u.dth.converter.ConversionConfig;
+import cn.p4u.dth.converter.ConversionResult;
+import cn.p4u.dth.converter.DocxConverter;
+import cn.p4u.dth.util.Jdk8Helpers;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -297,7 +297,7 @@ Expected: BUILD SUCCESS — 所有测试通过
 
 ```bash
 cd C:\DevCode\agile-hub\docxToHtml4j
-git add src/main/java/cn/p4u/smart/gui/GuiRunner.java
+git add src/main/java/cn/p4u/dth/gui/GuiRunner.java
 git commit -m "feat(gui): add JFrame skeleton with layout components"
 ```
 
@@ -306,7 +306,7 @@ git commit -m "feat(gui): add JFrame skeleton with layout components"
 ### Task 3: 文件选择事件绑定
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/gui/GuiRunner.java`
+- Modify: `src/main/java/cn/p4u/dth/gui/GuiRunner.java`
 
 绑定浏览按钮的 ActionListener，弹出 JFileChooser（仅 .docx 过滤），选择后更新路径框和转换按钮状态。
 
@@ -390,7 +390,7 @@ Expected: BUILD SUCCESS
 
 ```bash
 cd C:\DevCode\agile-hub\docxToHtml4j
-git add src/main/java/cn/p4u/smart/gui/GuiRunner.java
+git add src/main/java/cn/p4u/dth/gui/GuiRunner.java
 git commit -m "feat(gui): bind file chooser and validation logic"
 ```
 
@@ -399,7 +399,7 @@ git commit -m "feat(gui): bind file chooser and validation logic"
 ### Task 4: SwingWorker 转换逻辑
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/gui/GuiRunner.java`
+- Modify: `src/main/java/cn/p4u/dth/gui/GuiRunner.java`
 
 实现 `startConversion()` 方法，包含内部 SwingWorker 类。点击转换后禁用按钮、显示进度条，转换完成后处理成功/失败。
 
@@ -451,10 +451,10 @@ git commit -m "feat(gui): bind file chooser and validation logic"
 
 注意：需要确认 `GuiRunner` 文件顶部已有所有 import：
 - `javax.swing.SwingWorker` — 需手动添加
-- `cn.p4u.smart.converter.ConversionConfig` — 已在上一步添加
-- `cn.p4u.smart.converter.ConversionResult` — 已在上一步添加
-- `cn.p4u.smart.converter.DocxConverter` — 已在上一步添加
-- `cn.p4u.smart.util.Jdk8Helpers` — 已在上一步添加
+- `cn.p4u.dth.converter.ConversionConfig` — 已在上一步添加
+- `cn.p4u.dth.converter.ConversionResult` — 已在上一步添加
+- `cn.p4u.dth.converter.DocxConverter` — 已在上一步添加
+- `cn.p4u.dth.util.Jdk8Helpers` — 已在上一步添加
 
 添加 `import javax.swing.SwingWorker;` 到 import 区域。
 
@@ -465,7 +465,7 @@ Expected: BUILD SUCCESS
 
 - [ ] **Step 3: 手动冒烟测试**
 
-Run: `cd C:\DevCode\agile-hub\docxToHtml4j && set JAVA_HOME=C:\DevRepo\jdk\jdk-21 && mvn exec:java -Dexec.mainClass="cn.p4u.smart.gui.GuiRunner" -q`
+Run: `cd C:\DevCode\agile-hub\docxToHtml4j && set JAVA_HOME=C:\DevRepo\jdk\jdk-21 && mvn exec:java -Dexec.mainClass="cn.p4u.dth.gui.GuiRunner" -q`
 操作：选择项目根目录的 `demo.docx` → 点击"转换" → 确认同目录出现 `demo.html`
 Expected: 转换成功，进度条显示后消失
 
@@ -473,7 +473,7 @@ Expected: 转换成功，进度条显示后消失
 
 ```bash
 cd C:\DevCode\agile-hub\docxToHtml4j
-git add src/main/java/cn/p4u/smart/gui/GuiRunner.java
+git add src/main/java/cn/p4u/dth/gui/GuiRunner.java
 git commit -m "feat(gui): add SwingWorker conversion logic"
 ```
 
@@ -482,7 +482,7 @@ git commit -m "feat(gui): add SwingWorker conversion logic"
 ### Task 5: 成功弹窗
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/gui/GuiRunner.java`
+- Modify: `src/main/java/cn/p4u/dth/gui/GuiRunner.java`
 
 自定义 JDialog 显示转换结果，"打开文件位置"按钮调用 `Desktop.open()`。
 
@@ -546,7 +546,7 @@ Expected: BUILD SUCCESS
 
 - [ ] **Step 3: 手动冒烟测试**
 
-Run: `cd C:\DevCode\agile-hub\docxToHtml4j && set JAVA_HOME=C:\DevRepo\jdk\jdk-21 && mvn exec:java -Dexec.mainClass="cn.p4u.smart.gui.GuiRunner" -q`
+Run: `cd C:\DevCode\agile-hub\docxToHtml4j && set JAVA_HOME=C:\DevRepo\jdk\jdk-21 && mvn exec:java -Dexec.mainClass="cn.p4u.dth.gui.GuiRunner" -q`
 操作：选择 demo.docx → 转换 → 在弹窗中点击"打开文件位置" → 确认资源管理器打开
 Expected: 弹窗显示输出路径，点击"打开文件位置"打开目录
 
@@ -554,7 +554,7 @@ Expected: 弹窗显示输出路径，点击"打开文件位置"打开目录
 
 ```bash
 cd C:\DevCode\agile-hub\docxToHtml4j
-git add src/main/java/cn/p4u/smart/gui/GuiRunner.java
+git add src/main/java/cn/p4u/dth/gui/GuiRunner.java
 git commit -m "feat(gui): add success dialog with open-file-location"
 ```
 
@@ -585,7 +585,7 @@ git commit -m "feat(gui): add success dialog with open-file-location"
             <version>0.10.6</version>
             <extensions>true</extensions>
             <configuration>
-              <mainClass>cn.p4u.smart.gui.GuiRunner</mainClass>
+              <mainClass>cn.p4u.dth.gui.GuiRunner</mainClass>
               <outputName>docx2html</outputName>
               <buildArgs>
                 <buildArg>--no-fallback</buildArg>
@@ -617,7 +617,7 @@ git commit -m "feat(gui): add success dialog with open-file-location"
                   <shadedClassifierName>all</shadedClassifierName>
                   <transformers>
                     <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                      <mainClass>cn.p4u.smart.gui.GuiRunner</mainClass>
+                      <mainClass>cn.p4u.dth.gui.GuiRunner</mainClass>
                     </transformer>
                   </transformers>
                 </configuration>
@@ -722,8 +722,8 @@ git commit -m "feat(build): add GraalVM Native Image profile and Swing reflect c
 ### Task 7: 集成验证与清理
 
 **Files:**
-- Modify: `src/main/java/cn/p4u/smart/gui/GuiRunner.java`（如有修复）
-- Modify: `src/test/java/cn/p4u/smart/gui/GuiRunnerTest.java`（如有补充）
+- Modify: `src/main/java/cn/p4u/dth/gui/GuiRunner.java`（如有修复）
+- Modify: `src/test/java/cn/p4u/dth/gui/GuiRunnerTest.java`（如有补充）
 
 最终验证：全量测试、手动端到端测试、代码审查。
 
@@ -734,7 +734,7 @@ Expected: BUILD SUCCESS — 所有测试通过
 
 - [ ] **Step 2: 手动端到端测试**
 
-Run: `cd C:\DevCode\agile-hub\docxToHtml4j && set JAVA_HOME=C:\DevRepo\jdk\jdk-21 && mvn exec:java -Dexec.mainClass="cn.p4u.smart.gui.GuiRunner" -q`
+Run: `cd C:\DevCode\agile-hub\docxToHtml4j && set JAVA_HOME=C:\DevRepo\jdk\jdk-21 && mvn exec:java -Dexec.mainClass="cn.p4u.dth.gui.GuiRunner" -q`
 
 验证清单：
 - [ ] 窗口标题为"docx → HTML 转换器"

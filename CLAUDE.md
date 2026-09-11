@@ -148,7 +148,7 @@ One test dependency:
 
 ## Testing
 
-Tests use `TestDocxBuilder` (in `src/test/java/cn/p4u/smart/util/`) to programmatically construct valid .docx ZIP files. It implements `AutoCloseable` and cleans up the `.docx` temp file on close. The extracted directory is cleaned up by `DocxExtractor.cleanup()` in test `finally` blocks. Supports `addContentTypes()`, `addRels()`, `addDocument()`, `addDocumentRels()`, `addStyles()`, `addTheme()`, and `addMedia()`.
+Tests use `TestDocxBuilder` (in `src/test/java/cn/p4u/dth/util/`) to programmatically construct valid .docx ZIP files. It implements `AutoCloseable` and cleans up the `.docx` temp file on close. The extracted directory is cleaned up by `DocxExtractor.cleanup()` in test `finally` blocks. Supports `addContentTypes()`, `addRels()`, `addDocument()`, `addDocumentRels()`, `addStyles()`, `addTheme()`, and `addMedia()`.
 
 ## Packaging (Windows exe)
 

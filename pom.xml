@@ -2,144 +2,153 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>cn.p4u.smart</groupId>
-  <artifactId>docxToHtml4j</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <packaging>jar</packaging>
+    <groupId>io.github.lytdev</groupId>
+    <artifactId>docx-to-html</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
 
-  <name>docxToHtml4j</name>
-  <description>Convert .docx files to HTML with high-fidelity style preservation</description>
+    <name>docx-to-html</name>
+    <description>Convert .docx files to HTML with high-fidelity style preservation</description>
+    <url>https://cnb.cool/p4u/agilehub.site/docxToHtml4j</url>
+    <licenses>
+        <license>
+            <name>Apache License Version 2.0, January 2004</name>
+            <url>http://www.apache.org/licenses/</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>lytdev</name>
+            <email>lytdev@outlook.com</email>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git@github.com:chinabugotech/hutool.git</connection>
+        <developerConnection>scm:git@github.com:chinabugotech/hutool.git</developerConnection>
+        <url>git@github.com:chinabugotech/hutool.git</url>
+    </scm>
 
-  <properties>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jpackage.path>${env.JAVA_HOME}/bin/jpackage</jpackage.path>
-  </properties>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.jsoup</groupId>
-      <artifactId>jsoup</artifactId>
-      <version>1.22.1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.aliyun.oss</groupId>
-      <artifactId>aliyun-sdk-oss</artifactId>
-      <version>3.17.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>5.11.4</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
-        <configuration>
-          <source>21</source>
-          <target>21</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.2</version>
-      </plugin>
-    </plugins>
-  </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.22.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.4</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-  <profiles>
-    <profile>
-      <id>native</id>
-      <build>
+    <build>
+        <finalName>docx-to-html-${project.version}</finalName>
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-shade-plugin</artifactId>
-            <version>3.6.0</version>
-            <executions>
-              <execution>
-                <phase>package</phase>
-                <goals>
-                  <goal>shade</goal>
-                </goals>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
-                  <shadedArtifactAttached>true</shadedArtifactAttached>
-                  <shadedClassifierName>all</shadedClassifierName>
-                  <transformers>
-                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                      <mainClass>cn.p4u.smart.gui.GuiRunner</mainClass>
-                    </transformer>
-                  </transformers>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.8</version>
-            <executions>
-              <execution>
-                <id>prepare-jpackage-input</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <delete dir="${project.build.directory}/dist/docx2html" quiet="true"/>
-                    <mkdir dir="${project.build.directory}/jpackage-input"/>
-                    <copy file="${project.build.directory}/${project.build.finalName}-all.jar" todir="${project.build.directory}/jpackage-input" overwrite="true"/>
-                  </target>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>3.5.0</version>
-            <executions>
-              <execution>
-                <id>jpackage</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${jpackage.path}</executable>
-                  <arguments>
-                    <argument>--input</argument>
-                    <argument>${project.build.directory}/jpackage-input</argument>
-                    <argument>--main-jar</argument>
-                    <argument>${project.build.finalName}-all.jar</argument>
-                    <argument>--main-class</argument>
-                    <argument>cn.p4u.smart.gui.GuiRunner</argument>
-                    <argument>--name</argument>
-                    <argument>docx2html</argument>
-                    <argument>--type</argument>
-                    <argument>app-image</argument>
-                    <argument>--dest</argument>
-                    <argument>${project.build.directory}/dist</argument>
-                    <argument>--vendor</argument>
-                    <argument>p4u</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+            </plugin>
         </plugins>
-      </build>
-    </profile>
-  </profiles>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- 1. 源码插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.4.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 2. Javadoc 插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
+                        <configuration>
+                            <!-- 关闭严格的文档检查，避免因注释问题导致构建失败 -->
+                            <doclint>none</doclint>
+                            <!-- 确保即使生成 Javadoc 时有错误，也不会让整个构建失败 -->
+                            <failOnError>false</failOnError>
+                            <!-- 如果使用 JDK 21 且插件版本有兼容性问题，可以添加此配置 -->
+                            <disableNoFonts>true</disableNoFonts>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 3. GPG 签名插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.11.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <!--需要与 settings.xml 中 <server> 的 <id> 一致-->
+                            <publishingServerId>central</publishingServerId>
+                            <!--表示上传后需要手动在 Portal 上确认发布（设为 true 则自动发布）-->
+                            <autoPublish>false</autoPublish>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
