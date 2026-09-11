@@ -59,6 +59,33 @@ try (InputStream input = Files.newInputStream(Path.of("demo.docx"))) {
 
 `DocxConverter` 会读取数据流，但不会关闭调用方传入的 `InputStream`，因此应由调用方负责关闭。
 
+## 命令行调用示例
+```bash
+/usr/jvm/dragonwell-21/bin/java -jar docx-to-html-{version}-cli.jar /opt/tmp/demo-linux.docx
+```
+```bash
+/usr/jvm/dragonwell-21/bin/java -jar docx-to-html-{version}-cli.jar -i /opt/tmp/demo-linux.docx --stdout > report.html
+```
+
+```bash
+/usr/jvm/dragonwell-21/bin/java -jar docx-to-html-{version}-cli.jar -i /opt/tmp/demo-linux.docx -o /opt/tmp/demo-linux.html
+```
+
+```bash
+/usr/jvm/dragonwell-21/bin/java -jar docx-to-html-{version}-cli.jar -i /opt/tmp/demo-linux.docx -o /opt/tmp/demo-linux.html --wmf-strategy IMAGEMAGICK --imagemagick-path /usr/bin/magick --tmp-dir /opt/tmp/
+```
+
+> 支持参数：
+* `-i`, `--input` `<path>`         输入 `.docx` 文件路径（必填，也可作为位置参数）
+* `-o`, `--output` `<path>`        输出 `.html` 文件路径（默认：与输入同目录同名）
+* `--stdout`                       将 `HTML` 输出到标准输出而非文件
+* `--wmf-strategy` `<name>`        `WMF/EMF` 转换策略：`AUTO` | `IMAGEMAGICK` | `POWERSHELL` | `NONE`（默认 `AUTO`）
+* `--imagemagick-path` `<path>`    `ImageMagick` 可执行文件路径（`Linux` 上如 `/usr/bin/magick`）
+* `--tmp-dir` `<path>`             临时目录根路径（默认：系统临时目录）
+* `--latex-url` `<url>`            `LaTeX` 公式渲染地址模板
+* `-h`, `--help`                   显示本帮助
+
+
 ## Spring Boot 调用示例
 
 ### 定义转换配置
