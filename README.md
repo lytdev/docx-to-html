@@ -209,7 +209,7 @@ String html = DocxConverter.convert(inputStream, resolver);
 | 策略 | 行为 |
 | --- | --- |
 | `AUTO` | 先尝试 ImageMagick，失败后在 Windows 上尝试 PowerShell/System.Drawing |
-| `IMAGEMAGICK` | 只使用 ImageMagick；可通过 `imageMagickPath` 指定 `magick.exe` |
+| `IMAGEMAGICK` | 使用 ImageMagick；Linux 的中文 WMF 使用下述兼容渲染分支 |
 | `POWERSHELL` | 使用 Windows PowerShell 和 System.Drawing |
 | `NONE` | 不转换 WMF/EMF，保留原资源交给图片解析器处理 |
 
@@ -221,6 +221,34 @@ ConversionConfig config = ConversionConfig.builder()
         .imageMagickPath("C:/Program Files/ImageMagick-7.1.1-Q16-HDRI/magick.exe")
         .build();
 ```
+
+### Rocky Linux 的中文公式 WMF
+
+当 `AUTO` 选中 ImageMagick 或指定 `IMAGEMAGICK` 时，仅在 Linux 上检测 WMF 字体对象。
+含 `charset=134` 或 `136` 的 WMF 使用 `poi-scratchpad 5.5.1` 和 Java2D 渲染为透明 PNG，
+分别按 CP936/GBK、Big5 解码 `TextOut`/`ExtTextOut`。DBCS 的逐字节 Dx 间距合并为逐字符间距。
+原 WMF 字节不会改写；Windows、EMF 和不含中文字符集的 WMF 继续使用原来的转换路径。
+这也意味着单独在命令行执行 `magick input.wmf output.png` 不会获得本项目的兼容处理。
+
+Rocky Linux 的应用运行环境（容器部署时为容器内部）需要 `fontconfig`、`freetype` 及中文字体，
+例如 Noto Sans CJK SC 或有使用许可的宋体。安装字体后刷新缓存、重启 Java 进程，并检查：
+
+```bash
+fc-cache -fv
+fc-list :lang=zh family
+```
+
+默认优先使用原字体，缺少中文字形时使用 Java `Dialog` 逻辑字体回退。
+也可通过 JVM 参数指定已安装的字体族（不是字体文件路径）：
+
+```text
+-Djava.awt.headless=true -Ddocx2html.wmf.cjkFont="Noto Sans CJK SC"
+```
+
+如果字体仍不能显示实际文字，转换会记录缺字原因并失败，遵循原有图片解析器降级行为。
+该分支只处理明确声明中文字符集的 WMF，不猜测 ANSI/DEFAULT 的编码；
+含字形索引或 PDY 等暂不支持的文本标志时会报告错误。复杂公式仍应使用实际文件核对布局，
+尤其需安装其使用的数学符号字体。
 
 ## 解析进度回调
 

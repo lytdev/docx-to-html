@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Logger;
 
 /** 使用 ImageMagick 执行 WMF/EMF 转 PNG 的策略。 */
@@ -28,6 +29,11 @@ final class ImageMagickWmfRasterizer implements WmfRasterizer {
   @Override
   public boolean rasterize(Path source, Path target, int logicalWidth, int logicalHeight) {
     try {
+      if (useLinuxWmfRenderer(System.getProperty("os.name", ""))) {
+        Boolean result = LinuxWmfRasterizer.rasterizeChineseWmf(
+            source, target, logicalWidth, logicalHeight);
+        if (result != null) return result;
+      }
       List<String> arguments = new ArrayList<>();
       arguments.add(command);
 
@@ -71,6 +77,10 @@ final class ImageMagickWmfRasterizer implements WmfRasterizer {
     }
   }
 
+  static boolean useLinuxWmfRenderer(String osName) {
+    return osName.toLowerCase(Locale.ROOT).startsWith("linux");
+  }
+
   /**
    * Windows 会从可执行文件所在目录加载 DLL，因此完整路径模式下把该目录加入 PATH。
    */
@@ -86,7 +96,7 @@ final class ImageMagickWmfRasterizer implements WmfRasterizer {
     String directoryPath = executableDirectory.getAbsolutePath();
     processBuilder.environment().put(
         "PATH",
-        oldPath == null || oldPath.isEmpty() ? directoryPath : directoryPath + ";" + oldPath);
+        oldPath == null || oldPath.isEmpty() ? directoryPath : directoryPath + File.pathSeparator + oldPath);
   }
 
   private static String readOutput(Process process) throws Exception {
