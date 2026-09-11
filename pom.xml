@@ -142,7 +142,7 @@
                         <extensions>true</extensions>
                         <configuration>
                             <!--需要与 settings.xml 中 <server> 的 <id> 一致-->
-                            <publishingServerId>central</publishingServerId>
+                            <publishingServerId>central-p4u</publishingServerId>
                             <!--表示上传后需要手动在 Portal 上确认发布（设为 true 则自动发布）-->
                             <autoPublish>false</autoPublish>
                         </configuration>
