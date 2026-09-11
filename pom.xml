@@ -11,7 +11,7 @@
 
     <name>docx-to-html</name>
     <description>Convert .docx files to HTML with high-fidelity style preservation</description>
-    <url>https://cnb.cool/p4u/agilehub.site/docxToHtml4j</url>
+    <url>https://github.com/lytdev/docx-to-html</url>
     <licenses>
         <license>
             <name>Apache License Version 2.0, January 2004</name>
