@@ -1,7 +1,10 @@
 package cn.p4u.dth;
 
+import cn.p4u.dth.converter.ConversionConfig;
 import cn.p4u.dth.converter.DocxConverter;
 import cn.p4u.dth.renderer.Image2Base64Resolver;
+import cn.p4u.dth.renderer.WmfConversionStrategy;
+
 import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -19,11 +22,16 @@ public class PublicDocxConvertTest {
     String docxPath = tmpDir + "word不同类别测试.docx";
     String htmlPath = tmpDir + "word不同类别测试.html";
     FileInputStream fileInputStream = new FileInputStream(docxPath);
+    ConversionConfig conversionConfig =
+        new ConversionConfig(
+            new Image2Base64Resolver(),
+            tmpDir,
+            WmfConversionStrategy.IMAGEMAGICK,
+            "C:\\DevRepo\\ImageMagick\\ImageMagick-7.1.2-Q16\\magick.exe");
     String htmlContent =
         DocxConverter.convert(
             fileInputStream,
-            new Image2Base64Resolver(),
-            tmpDir,
+            conversionConfig,
             (count, total, record) -> {
               System.out.println("进度:" + calcProgress(count, total));
               System.out.println("type:" + record.getType());

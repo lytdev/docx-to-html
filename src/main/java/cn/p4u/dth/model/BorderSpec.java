@@ -33,10 +33,16 @@ public final class BorderSpec {
         this.color = color;
     }
 
-    /** @return 边框宽度的八分之一磅原始值；无边框时为 {@code null} */
+    /**
+     * 返回边框宽度。
+     * @return 八分之一磅原始值；无边框时为 {@code null}
+     */
     public String width() { return width; }
 
-    /** @return 十六进制边框颜色；未指定时为 {@code null} */
+    /**
+     * 返回边框颜色。
+     * @return 十六进制颜色；未指定时为 {@code null}
+     */
     public String color() { return color; }
 
     /**

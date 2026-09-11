@@ -166,8 +166,9 @@ class OleEquationLatexTest {
                 assertEquals("formula-item formula-image", img.className());
                 assertEquals("formula", img.attr("data-type"));
                 assertEquals("memory:equation", img.attr("src"));
-                assertEquals(26, Double.parseDouble(img.attr("width")));
+                assertFalse(img.hasAttr("width"));
                 assertEquals(13, Double.parseDouble(img.attr("height")));
+                assertTrue(img.attr("style").contains("max-width: 100%"));
             }
         }
     }

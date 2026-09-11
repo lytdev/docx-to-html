@@ -28,12 +28,18 @@ public class GuiRunner extends JFrame {
     private static final int WIDTH = 480;
     private static final int HEIGHT = 220;
 
+    /** 显示当前所选 DOCX 路径。 */
     private final JTextField pathField;
+    /** 打开文件选择器的按钮。 */
     private final JButton browseButton;
+    /** 启动转换的按钮。 */
     private final JButton convertButton;
+    /** 转换期间显示的进度条。 */
     private final JProgressBar progressBar;
+    /** 显示转换状态或错误信息。 */
     private final JLabel statusLabel;
 
+    /** 当前选择的 DOCX 文件。 */
     private Path selectedFile;
 
     /** 创建并初始化 DOCX 转换窗口。 */

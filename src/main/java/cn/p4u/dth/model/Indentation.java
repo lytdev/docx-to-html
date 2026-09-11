@@ -33,13 +33,22 @@ public final class Indentation {
         this.firstLine = firstLine;
     }
 
-    /** @return 左缩进的 twips 值；未设置时为 {@code null} */
+    /**
+     * 返回左缩进。
+     * @return twips 值；未设置时为 {@code null}
+     */
     public String left() { return left; }
 
-    /** @return 右缩进的 twips 值；未设置时为 {@code null} */
+    /**
+     * 返回右缩进。
+     * @return twips 值；未设置时为 {@code null}
+     */
     public String right() { return right; }
 
-    /** @return 首行缩进的 twips 值；未设置时为 {@code null} */
+    /**
+     * 返回首行缩进。
+     * @return twips 值；未设置时为 {@code null}
+     */
     public String firstLine() { return firstLine; }
 
     @Override

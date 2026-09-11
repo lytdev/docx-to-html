@@ -70,12 +70,19 @@ public final class ParagraphBlock implements ContentBlock {
         this.ilvl = ilvl;
     }
 
+    /** {@return 段落样式 ID，可为 {@code null}} */
     public String styleId() { return styleId; }
+    /** {@return 大纲级别，可为 {@code null}} */
     public Integer outlineLvl() { return outlineLvl; }
+    /** {@return 对齐方式，可为 {@code null}} */
     public String alignment() { return alignment; }
+    /** {@return 缩进信息，可为 {@code null}} */
     public Indentation indentation() { return indentation; }
+    /** {@return 按原顺序排列的内联元素} */
     public List<ParagraphElement> elements() { return elements; }
+    /** {@return 列表编号 ID，可为 {@code null}} */
     public String numId() { return numId; }
+    /** {@return 列表缩进级别，可为 {@code null}} */
     public Integer ilvl() { return ilvl; }
 
     @Override

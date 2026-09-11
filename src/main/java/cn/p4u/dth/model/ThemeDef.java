@@ -31,7 +31,9 @@ public final class ThemeDef {
         this.fonts = fonts;
     }
 
+    /** {@return 主题颜色方案，可为 {@code null}} */
     public ColorScheme colors() { return colors; }
+    /** {@return 主题字体方案，可为 {@code null}} */
     public FontScheme fonts() { return fonts; }
 
     @Override
@@ -120,17 +122,29 @@ public final class ThemeDef {
             this.folHlink = folHlink;
         }
 
+        /** {@return 深色 1，可为 {@code null}} */
         public String dk1() { return dk1; }
+        /** {@return 浅色 1，可为 {@code null}} */
         public String lt1() { return lt1; }
+        /** {@return 深色 2，可为 {@code null}} */
         public String dk2() { return dk2; }
+        /** {@return 浅色 2，可为 {@code null}} */
         public String lt2() { return lt2; }
+        /** {@return 强调色 1，可为 {@code null}} */
         public String accent1() { return accent1; }
+        /** {@return 强调色 2，可为 {@code null}} */
         public String accent2() { return accent2; }
+        /** {@return 强调色 3，可为 {@code null}} */
         public String accent3() { return accent3; }
+        /** {@return 强调色 4，可为 {@code null}} */
         public String accent4() { return accent4; }
+        /** {@return 强调色 5，可为 {@code null}} */
         public String accent5() { return accent5; }
+        /** {@return 强调色 6，可为 {@code null}} */
         public String accent6() { return accent6; }
+        /** {@return 超链接颜色，可为 {@code null}} */
         public String hlink() { return hlink; }
+        /** {@return 已访问超链接颜色，可为 {@code null}} */
         public String folHlink() { return folHlink; }
 
         @Override
@@ -228,13 +242,21 @@ public final class ThemeDef {
             this.minorScriptOverrides = minorScriptOverrides;
         }
 
+        /** {@return 主字体西文字体名，可为 {@code null}} */
         public String majorLatin() { return majorLatin; }
+        /** {@return 主字体东亚字体名，可为 {@code null}} */
         public String majorEastAsia() { return majorEastAsia; }
+        /** {@return 主字体复杂脚本字体名，可为 {@code null}} */
         public String majorCs() { return majorCs; }
+        /** {@return 辅字体西文字体名，可为 {@code null}} */
         public String minorLatin() { return minorLatin; }
+        /** {@return 辅字体东亚字体名，可为 {@code null}} */
         public String minorEastAsia() { return minorEastAsia; }
+        /** {@return 辅字体复杂脚本字体名，可为 {@code null}} */
         public String minorCs() { return minorCs; }
+        /** {@return 主字体脚本覆盖映射，可为 {@code null}} */
         public Map<String, String> majorScriptOverrides() { return majorScriptOverrides; }
+        /** {@return 辅字体脚本覆盖映射，可为 {@code null}} */
         public Map<String, String> minorScriptOverrides() { return minorScriptOverrides; }
 
         @Override

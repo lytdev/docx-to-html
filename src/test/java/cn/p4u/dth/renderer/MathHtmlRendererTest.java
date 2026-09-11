@@ -37,7 +37,7 @@ class MathHtmlRendererTest {
     assertTrue(resolved.get());
     assertTrue(html.toString().startsWith("<img src=\"memory:formula\""));
     assertTrue(html.toString().contains("data-latex=\"x\""));
-    assertTrue(html.toString().contains("width=\"20\""));
+    assertTrue(!html.toString().contains("width=\""));
     assertTrue(html.toString().contains("height=\"10\""));
     assertFormulaImage(html.toString());
   }
@@ -82,6 +82,8 @@ class MathHtmlRendererTest {
       var image = org.jsoup.Jsoup.parse(result).selectFirst("img");
       assertEquals("formula-item formula-image", image.className());
       assertEquals("formula", image.attr("data-type"));
+      assertTrue(!image.hasAttr("width"));
+      assertTrue(image.attr("style").contains("max-width: 100%"));
     }
   }
 

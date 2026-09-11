@@ -33,8 +33,11 @@ public final class TableRow {
         this.hRule = hRule;
     }
 
+    /** {@return 按原顺序排列的单元格} */
     public List<TableCell> cells() { return cells; }
+    /** {@return 行高的 CSS pt 值，可为 {@code null}} */
     public String height() { return height; }
+    /** {@return {@code auto}、{@code atLeast}、{@code exact} 或 {@code null}} */
     public String hRule() { return hRule; }
 
     @Override

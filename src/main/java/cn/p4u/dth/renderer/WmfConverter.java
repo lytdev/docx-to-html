@@ -27,12 +27,20 @@ public final class WmfConverter {
     WmfRasterizerFactory.resetCache();
   }
 
-  /** 判断 MIME 类型是否表示 WMF 或 EMF。 */
+  /**
+   * 判断 MIME 类型是否表示 WMF 或 EMF。
+   * @param mimeType 待判断的 MIME 类型
+   * @return 是 WMF 或 EMF 时为 {@code true}
+   */
   public static boolean isWmfOrEmf(String mimeType) {
     return "image/x-wmf".equals(mimeType) || "image/x-emf".equals(mimeType);
   }
 
-  /** 判断路径扩展名是否为 .wmf 或 .emf，比较时忽略大小写。 */
+  /**
+   * 判断路径扩展名是否为 .wmf 或 .emf，比较时忽略大小写。
+   * @param path 待判断路径，可为 {@code null}
+   * @return 扩展名匹配时为 {@code true}
+   */
   public static boolean isWmfOrEmfPath(Path path) {
     if (path == null) {
       return false;
@@ -43,13 +51,24 @@ public final class WmfConverter {
 
   /**
    * 使用默认 AUTO 策略转换。保留该重载是为了兼容已有调用代码。
+   * @param data WMF/EMF 原始数据
+   * @param logicalWidth 目标逻辑宽度（像素）
+   * @param logicalHeight 目标逻辑高度（像素）
+   * @return PNG 数据；无法转换时为 {@code null}
    */
   public static byte[] convertToPng(byte[] data, int logicalWidth, int logicalHeight) {
     return convertToPng(
         data, logicalWidth, logicalHeight, WmfConversionStrategy.AUTO, null);
   }
 
-  /** 按 ConversionConfig 中的策略转换 WMF/EMF 数据。 */
+  /**
+   * 按 ConversionConfig 中的策略转换 WMF/EMF 数据。
+   * @param data WMF/EMF 原始数据
+   * @param logicalWidth 目标逻辑宽度（像素）
+   * @param logicalHeight 目标逻辑高度（像素）
+   * @param config 转换配置
+   * @return PNG 数据；无法转换时为 {@code null}
+   */
   public static byte[] convertToPng(
       byte[] data, int logicalWidth, int logicalHeight, ConversionConfig config) {
     Objects.requireNonNull(config, "config");

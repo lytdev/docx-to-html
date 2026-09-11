@@ -69,16 +69,27 @@ public final class TextRun implements ParagraphElement {
         this.styleId = styleId;
     }
 
+    /** {@return 文本内容} */
     public String text() { return text; }
+    /** {@return 字体规格，可为 {@code null}} */
     public FontSpec font() { return font; }
+    /** {@return 加粗时为 {@code true}} */
     public boolean bold() { return bold; }
+    /** {@return 斜体时为 {@code true}} */
     public boolean italic() { return italic; }
+    /** {@return 带下划线时为 {@code true}} */
     public boolean underline() { return underline; }
+    /** {@return 带删除线时为 {@code true}} */
     public boolean strike() { return strike; }
+    /** {@return 高亮颜色名称，可为 {@code null}} */
     public String highlight() { return highlight; }
+    /** {@return 底纹的十六进制颜色，可为 {@code null}} */
     public String shading() { return shading; }
+    /** {@return 上标时为 {@code true}} */
     public boolean superscript() { return superscript; }
+    /** {@return 下标时为 {@code true}} */
     public boolean subscript() { return subscript; }
+    /** {@return 字符样式 ID，可为 {@code null}} */
     public String styleId() { return styleId; }
 
     @Override

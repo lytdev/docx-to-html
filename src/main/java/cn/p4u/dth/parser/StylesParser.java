@@ -49,6 +49,13 @@ public final class StylesParser {
         /** 默认字符样式的 styleId（标记 w:default="1" 且 w:type="character"）；可为 null */
         private final String defaultCharStyleId;
 
+        /**
+         * 创建样式解析结果。
+         * @param styles 样式定义映射
+         * @param docDefaultRunAttrs 文档默认字符属性，可为 {@code null}
+         * @param defaultParaStyleId 默认段落样式 ID，可为 {@code null}
+         * @param defaultCharStyleId 默认字符样式 ID，可为 {@code null}
+         */
         public StylesResult(Map<String, StyleDef> styles,
                             Map<String, Map<String, String>> docDefaultRunAttrs,
                             String defaultParaStyleId,
@@ -59,16 +66,28 @@ public final class StylesParser {
             this.defaultCharStyleId = defaultCharStyleId;
         }
 
-        /** @return 样式映射，不可变 */
+        /**
+         * 返回样式定义。
+         * @return 样式映射，不可变
+         */
         public Map<String, StyleDef> styles() { return styles; }
 
-        /** @return 文档默认字符属性嵌套 map，可能为 null */
+        /**
+         * 返回默认字符属性。
+         * @return 嵌套 map，可能为 null
+         */
         public Map<String, Map<String, String>> docDefaultRunAttrs() { return docDefaultRunAttrs; }
 
-        /** @return 默认段落样式 ID，可能为 null */
+        /**
+         * 返回默认段落样式。
+         * @return 样式 ID，可能为 null
+         */
         public String defaultParaStyleId() { return defaultParaStyleId; }
 
-        /** @return 默认字符样式 ID，可能为 null */
+        /**
+         * 返回默认字符样式。
+         * @return 样式 ID，可能为 null
+         */
         public String defaultCharStyleId() { return defaultCharStyleId; }
     }
 

@@ -15,6 +15,8 @@ import java.util.List;
  * 后续步骤不再执行。阅读顺序就是实际降级顺序：图片 → MathML → 在线服务 → LaTeX 文本。</p>
  */
 final class MathHtmlRenderer {
+  private static final String FORMULA_IMAGE_STYLE =
+      "vertical-align: middle; max-width: 100%;";
   private static final List<RenderStep> STEPS = List.of(
       new ImageStep(), new MathMlStep(), new OnlineLatexStep(), new LatexTextStep());
 
@@ -58,13 +60,14 @@ final class MathHtmlRenderer {
         ImageUriResolver.ResolveResult result = resolveFormulaImage(context, imagePath);
         context.html().append("<img src=\"")
             .append(HtmlEscaper.attribute(result.uri()))
-            .append("\" style=\"vertical-align: middle;\"");
+            .append("\" style=\"").append(FORMULA_IMAGE_STYLE).append("\"");
       } catch (IOException e) {
-        context.html().append(
-            "<img src=\"\" style=\"vertical-align: middle; color: #999; font-style: italic;\" "
+        context.html().append("<img src=\"\" style=\"")
+            .append(FORMULA_IMAGE_STYLE)
+            .append(" color: #999; font-style: italic;\" "
                 + "alt=\"[math image resolve failed]\"");
       }
-      appendDisplaySize(context.html(), math);
+      appendDisplayHeight(context.html(), math);
       appendFormulaAttributes(context.html());
       appendLatexAttribute(context.html(), math.latex());
       context.html().append(">");
@@ -96,9 +99,8 @@ final class MathHtmlRenderer {
     }
   }
 
-  /** 使用 Word 中保存的显示尺寸，PNG 本身仍保留高分辨率像素用于清晰显示。 */
-  private static void appendDisplaySize(StringBuilder html, MathElement math) {
-    if (math.width() > 0) html.append(" width=\"").append(emusToPx(math.width())).append("\"");
+  /** 使用 Word 中保存的显示高度；宽度由图片宽高比和 max-width 自适应。 */
+  private static void appendDisplayHeight(StringBuilder html, MathElement math) {
     if (math.height() > 0) html.append(" height=\"").append(emusToPx(math.height())).append("\"");
   }
 
@@ -132,7 +134,7 @@ final class MathHtmlRenderer {
         String source = context.config().latexRenderUrl().replace("{latex}", encoded);
         context.html().append("<img src=\"")
             .append(HtmlEscaper.attribute(source))
-            .append("\" style=\"vertical-align: middle;\" alt=\"")
+            .append("\" style=\"").append(FORMULA_IMAGE_STYLE).append("\" alt=\"")
             .append(HtmlEscaper.attribute(latex))
             .append("\" data-latex=\"")
             .append(HtmlEscaper.attribute(latex))

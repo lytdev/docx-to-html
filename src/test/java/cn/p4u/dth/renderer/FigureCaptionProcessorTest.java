@@ -31,8 +31,9 @@ class FigureCaptionProcessorTest {
                 var formula = result.selectFirst("img[data-type=formula]");
                 assertNotNull(formula);
                 assertEquals("formula-item formula-image", formula.className());
-                assertEquals("26", formula.attr("width"));
+                assertFalse(formula.hasAttr("width"));
                 assertEquals("13", formula.attr("height"));
+                assertTrue(formula.attr("style").contains("max-width: 100%"));
                 assertFalse(formula.hasClass("image-block"));
                 assertFalse(formula.hasClass("image-item"));
 

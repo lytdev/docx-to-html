@@ -106,19 +106,33 @@ public final class ShapeElement implements ParagraphElement {
                 wrapMode, 0, 0, width, height, Collections.<ShapeElement>emptyList());
     }
 
+    /** {@return 预设几何体名称} */
     public String preset() { return preset; }
+    /** {@return 形状宽度（EMU）} */
     public int width() { return width; }
+    /** {@return 形状高度（EMU）} */
     public int height() { return height; }
+    /** {@return 形状 X 偏移（EMU）} */
     public int offX() { return offX; }
+    /** {@return 形状 Y 偏移（EMU）} */
     public int offY() { return offY; }
+    /** {@return 填充颜色，可为 {@code null}} */
     public String fillColor() { return fillColor; }
+    /** {@return 描边颜色，可为 {@code null}} */
     public String strokeColor() { return strokeColor; }
+    /** {@return 描边宽度（pt）} */
     public float strokeWidth() { return strokeWidth; }
+    /** {@return 文字环绕模式} */
     public WrapMode wrapMode() { return wrapMode; }
+    /** {@return 组坐标系原点 X} */
     public int chOffX() { return chOffX; }
+    /** {@return 组坐标系原点 Y} */
     public int chOffY() { return chOffY; }
+    /** {@return 组坐标系宽度} */
     public int chExtW() { return chExtW; }
+    /** {@return 组坐标系高度} */
     public int chExtH() { return chExtH; }
+    /** {@return 子形状列表} */
     public List<ShapeElement> children() { return children; }
 
     @Override

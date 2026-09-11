@@ -31,10 +31,16 @@ public final class HyperlinkElement implements ParagraphElement {
         this.runs = runs;
     }
 
-    /** @return 超链接目标 URL；未解析到目标时为 {@code null} */
+    /**
+     * 返回超链接目标。
+     * @return 目标 URL；未解析到时为 {@code null}
+     */
     public String url() { return url; }
 
-    /** @return 链接内按原顺序排列的文本运行列表 */
+    /**
+     * 返回链接文本。
+     * @return 按原顺序排列的文本运行列表
+     */
     public List<TextRun> runs() { return runs; }
 
     @Override

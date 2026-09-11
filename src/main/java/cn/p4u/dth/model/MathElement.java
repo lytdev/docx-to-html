@@ -72,22 +72,40 @@ public final class MathElement implements ParagraphElement {
         this.height = height;
     }
 
-    /** @return 公式的 LaTeX 表达式 */
+    /**
+     * 返回 LaTeX。
+     * @return 公式的 LaTeX 表达式
+     */
     public String latex() { return latex; }
 
-    /** @return 公式的 MathML XML；不存在时为 {@code null} */
+    /**
+     * 返回 MathML。
+     * @return 公式的 MathML XML；不存在时为 {@code null}
+     */
     public String mathml() { return mathml; }
 
-    /** @return 公式预览图片的相对路径；不存在时为 {@code null} */
+    /**
+     * 返回公式图片路径。
+     * @return 相对路径；不存在时为 {@code null}
+     */
     public String imagePath() { return imagePath; }
 
-    /** @return 公式预览图片的 MIME 类型；不存在时为 {@code null} */
+    /**
+     * 返回公式图片类型。
+     * @return MIME 类型；不存在时为 {@code null}
+     */
     public String mimeType() { return mimeType; }
 
-    /** @return 公式预览图片宽度（EMU），0 表示未知 */
+    /**
+     * 返回公式图片宽度。
+     * @return 宽度（EMU），0 表示未知
+     */
     public int width() { return width; }
 
-    /** @return 公式预览图片高度（EMU），0 表示未知 */
+    /**
+     * 返回公式图片高度。
+     * @return 高度（EMU），0 表示未知
+     */
     public int height() { return height; }
 
     @Override

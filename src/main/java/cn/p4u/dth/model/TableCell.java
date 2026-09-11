@@ -71,15 +71,25 @@ public final class TableCell {
         this.visibility = visibility;
     }
 
+    /** {@return 单元格内按原顺序排列的段落} */
     public List<ParagraphBlock> paragraphs() { return paragraphs; }
+    /** {@return 水平合并跨度} */
     public int colspan() { return colspan; }
+    /** {@return 垂直合并跨度} */
     public int rowspan() { return rowspan; }
+    /** {@return 单元格 CSS 宽度，可为 {@code null}} */
     public String width() { return width; }
+    /** {@return 顶部边框} */
     public BorderSpec topBorder() { return topBorder; }
+    /** {@return 左侧边框} */
     public BorderSpec leftBorder() { return leftBorder; }
+    /** {@return 底部边框} */
     public BorderSpec bottomBorder() { return bottomBorder; }
+    /** {@return 右侧边框} */
     public BorderSpec rightBorder() { return rightBorder; }
+    /** {@return 背景颜色，可为 {@code null}} */
     public String bgColor() { return bgColor; }
+    /** {@return 单元格可见时为 {@code true}} */
     public boolean visibility() { return visibility; }
 
     @Override

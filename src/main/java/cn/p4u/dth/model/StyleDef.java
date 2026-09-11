@@ -72,14 +72,23 @@ public final class StyleDef {
         this.rawTblAttrs = rawTblAttrs;
     }
 
+    /** {@return 样式 ID} */
     public String styleId() { return styleId; }
+    /** {@return 样式名称，可为 {@code null}} */
     public String name() { return name; }
+    /** {@return 父样式 ID，可为 {@code null}} */
     public String basedOn() { return basedOn; }
+    /** {@return 大纲级别，可为 {@code null}} */
     public Integer outlineLvl() { return outlineLvl; }
+    /** {@return 字符属性简写映射} */
     public Map<String, String> runProps() { return runProps; }
+    /** {@return 段落属性简写映射} */
     public Map<String, String> paragraphProps() { return paragraphProps; }
+    /** {@return 原始字符属性嵌套映射} */
     public Map<String, Map<String, String>> rawRunAttrs() { return rawRunAttrs; }
+    /** {@return 原始段落属性嵌套映射} */
     public Map<String, Map<String, String>> rawParaAttrs() { return rawParaAttrs; }
+    /** {@return 原始表格属性嵌套映射，可为 {@code null}} */
     public Map<String, Map<String, String>> rawTblAttrs() { return rawTblAttrs; }
 
     @Override

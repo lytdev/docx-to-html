@@ -66,14 +66,23 @@ public final class TableBlock implements ContentBlock {
         this.visibility = visibility;
     }
 
+    /** {@return 按原顺序排列的表格行} */
     public List<TableRow> rows() { return rows; }
+    /** {@return 表格 CSS 宽度，可为 {@code null}} */
     public String width() { return width; }
+    /** {@return 顶部外边框} */
     public BorderSpec topBorder() { return topBorder; }
+    /** {@return 左侧外边框} */
     public BorderSpec leftBorder() { return leftBorder; }
+    /** {@return 底部外边框} */
     public BorderSpec bottomBorder() { return bottomBorder; }
+    /** {@return 右侧外边框} */
     public BorderSpec rightBorder() { return rightBorder; }
+    /** {@return 行间水平内边框} */
     public BorderSpec insideHBorder() { return insideHBorder; }
+    /** {@return 列间垂直内边框} */
     public BorderSpec insideVBorder() { return insideVBorder; }
+    /** {@return 表格可见时为 {@code true}} */
     public boolean visibility() { return visibility; }
 
     @Override

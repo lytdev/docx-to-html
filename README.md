@@ -26,7 +26,7 @@
 
 ```xml
 <dependency>
-    <groupId>io.github.lytdev</groupId>
+    <groupId>cn.p4u.agile</groupId>
     <artifactId>docx-to-html</artifactId>
     <version>1.0.0</version>
 </dependency>
