@@ -49,6 +49,11 @@ public final class HtmlRenderer {
 
     /**
      * 使用指定资源根目录渲染文档模型。资源根目录由高层转换管线管理。
+     *
+     * @param model 已解析的文档模型
+     * @param config 转换配置
+     * @param resourceRoot DOCX 解压资源根目录；不需要解析资源时可为 {@code null}
+     * @return 完整的 HTML 文档字符串
      */
     public static String render(DocumentModel model, ConversionConfig config, Path resourceRoot) {
         StringBuilder sb = new StringBuilder();
@@ -69,7 +74,8 @@ public final class HtmlRenderer {
             renderBlock(sb, block, config, model.styles(), resourceRoot);
         }
         sb.append("</body>\n</html>");
-        return AdjacentSpanProcessor.process(FigureCaptionProcessor.process(sb.toString()));
+        return AdjacentSpanProcessor.process(
+                TableCaptionProcessor.process(FigureCaptionProcessor.process(sb.toString())));
     }
 
     /**

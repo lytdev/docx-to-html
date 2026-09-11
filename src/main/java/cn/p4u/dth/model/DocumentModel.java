@@ -56,9 +56,16 @@ public final class DocumentModel {
         this.numberingFormats = numberingFormats != null ? numberingFormats : Collections.<String, String>emptyMap();
     }
 
+    /** @return 以样式 ID 为键的样式定义映射 */
     public Map<String, StyleDef> styles() { return styles; }
+
+    /** @return 按文档顺序排列的顶层内容块 */
     public List<ContentBlock> content() { return content; }
+
+    /** @return 文档主题；文档没有主题文件时为 {@code null} */
     public ThemeDef theme() { return theme; }
+
+    /** @return 以编号 ID 为键的编号格式映射 */
     public Map<String, String> numberingFormats() { return numberingFormats; }
 
     @Override

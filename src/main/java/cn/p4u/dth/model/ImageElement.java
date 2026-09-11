@@ -45,7 +45,12 @@ public final class ImageElement implements ParagraphElement {
     /**
      * 构造包含名称或别名的图片元素。
      *
-     * @param altText 图片名称或别名，可为 null
+     * @param mediaPath 介质相对路径，如 {@code media/image1.png}
+     * @param mimeType 图片 MIME 类型，如 {@code image/png}
+     * @param width 图片宽度（EMU），0 表示未知
+     * @param height 图片高度（EMU），0 表示未知
+     * @param wrapMode 文字环绕模式
+     * @param altText 图片名称或别名，可为 {@code null}
      */
     public ImageElement(String mediaPath, String mimeType,
                         int width, int height,
@@ -58,11 +63,22 @@ public final class ImageElement implements ParagraphElement {
         this.altText = altText;
     }
 
+    /** @return 图片在 DOCX 解压目录中的相对路径 */
     public String mediaPath() { return mediaPath; }
+
+    /** @return 图片 MIME 类型 */
     public String mimeType() { return mimeType; }
+
+    /** @return 图片宽度（EMU），0 表示未知 */
     public int width() { return width; }
+
+    /** @return 图片高度（EMU），0 表示未知 */
     public int height() { return height; }
+
+    /** @return 文字环绕模式 */
     public WrapMode wrapMode() { return wrapMode; }
+
+    /** @return 图片名称或别名；不存在时为 {@code null} */
     public String altText() { return altText; }
 
     @Override

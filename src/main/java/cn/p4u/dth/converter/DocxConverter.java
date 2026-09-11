@@ -50,7 +50,10 @@ public final class DocxConverter {
   /**
    * 转换 DOCX，并实时报告正文内容的解析进度。
    *
+   * @param docxStream 输入的 DOCX 数据流；本方法读取但不关闭该流
+   * @param config 转换配置
    * @param callback 进度回调；传入 null 表示不监听进度
+   * @return 转换后的完整 HTML 字符串
    */
   public static String convert(
       InputStream docxStream,
@@ -126,7 +129,14 @@ public final class DocxConverter {
     return convert(docxStream, new ConversionConfig(imageUriResolver));
   }
 
-  /** 使用指定图片处理器转换，并报告解析进度。 */
+  /**
+   * 使用指定图片处理器转换，并报告解析进度。
+   *
+   * @param docxStream 输入的 DOCX 数据流；本方法读取但不关闭该流
+   * @param imageUriResolver 图片资源地址解析器
+   * @param callback 进度回调；传入 {@code null} 表示不监听进度
+   * @return 转换后的完整 HTML 字符串
+   */
   public static String convert(
       InputStream docxStream,
       ImageUriResolver imageUriResolver,
@@ -147,7 +157,15 @@ public final class DocxConverter {
     return convert(docxStream, new ConversionConfig(imageUriResolver, tmpDir));
   }
 
-  /** 使用指定图片处理器和临时目录转换，并报告解析进度。 */
+  /**
+   * 使用指定图片处理器和临时目录转换，并报告解析进度。
+   *
+   * @param docxStream 输入的 DOCX 数据流；本方法读取但不关闭该流
+   * @param imageUriResolver 图片资源地址解析器
+   * @param tmpDir 临时目录根路径；为 {@code null} 时使用系统临时目录
+   * @param callback 进度回调；传入 {@code null} 表示不监听进度
+   * @return 转换后的完整 HTML 字符串
+   */
   public static String convert(
       InputStream docxStream,
       ImageUriResolver imageUriResolver,
@@ -166,7 +184,13 @@ public final class DocxConverter {
     return convert(docxStream, ConversionConfig.defaults());
   }
 
-  /** 使用默认配置转换，并报告解析进度。 */
+  /**
+   * 使用默认配置转换，并报告解析进度。
+   *
+   * @param docxStream 输入的 DOCX 数据流；本方法读取但不关闭该流
+   * @param callback 进度回调；传入 {@code null} 表示不监听进度
+   * @return 转换后的完整 HTML 字符串
+   */
   public static String convert(
       InputStream docxStream,
       FileParseCallback<ContentBlock> callback) {

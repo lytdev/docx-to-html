@@ -36,6 +36,7 @@ public class GuiRunner extends JFrame {
 
     private Path selectedFile;
 
+    /** 创建并初始化 DOCX 转换窗口。 */
     public GuiRunner() {
         setTitle(TITLE);
         setSize(WIDTH, HEIGHT);

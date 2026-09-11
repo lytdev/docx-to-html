@@ -12,6 +12,9 @@ import java.util.Base64;
  */
 public final class Image2Base64Resolver implements ImageUriResolver {
 
+    /** 创建无状态的 Base64 图片资源解析器。 */
+    public Image2Base64Resolver() {}
+
     @Override
     public ResolveResult resolve(Path imagePath, String mimeType) throws IOException {
         byte[] data = Files.readAllBytes(imagePath);

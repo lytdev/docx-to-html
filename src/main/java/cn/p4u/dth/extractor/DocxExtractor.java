@@ -63,12 +63,23 @@ public final class DocxExtractor {
      * 解压到系统临时目录并返回可自动清理的资源句柄。
      *
      * <p>推荐在业务代码中使用 try-with-resources 管理这个对象。</p>
+     *
+     * @param docxStream 输入的 DOCX 数据流；本方法读取但不关闭该流
+     * @return 可自动清理解压目录的资源句柄
+     * @throws DocxConversionException 解压过程中发生 I/O 错误
      */
     public static ExtractedDocx open(InputStream docxStream) {
         return new ExtractedDocx(extract(docxStream));
     }
 
-    /** 解压到指定临时目录根路径，并返回可自动清理的资源句柄。 */
+    /**
+     * 解压到指定临时目录根路径，并返回可自动清理的资源句柄。
+     *
+     * @param docxStream 输入的 DOCX 数据流；本方法读取但不关闭该流
+     * @param tempRoot 存放解压临时文件的根目录
+     * @return 可自动清理解压目录的资源句柄
+     * @throws DocxConversionException 创建目录或解压过程中发生 I/O 错误
+     */
     public static ExtractedDocx open(InputStream docxStream, Path tempRoot) {
         return new ExtractedDocx(extract(docxStream, tempRoot));
     }

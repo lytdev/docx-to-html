@@ -17,7 +17,11 @@ public final class ExtractedDocx implements AutoCloseable {
     this.rootDirectory = Objects.requireNonNull(rootDirectory, "rootDirectory");
   }
 
-  /** 返回 document.xml、styles.xml 等文件所在的解压根目录。 */
+  /**
+   * 返回 document.xml、styles.xml 等文件所在的解压根目录。
+   *
+   * @return DOCX 内容的解压根目录
+   */
   public Path rootDirectory() {
     return rootDirectory;
   }

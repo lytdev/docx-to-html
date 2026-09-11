@@ -41,3 +41,4 @@ build/
 dependency-reduced-pom.xml
 *.docx
 deploy.bat
+deploy-verify.bat

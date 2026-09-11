@@ -43,10 +43,19 @@ public final class FontSpec {
         this.cs = cs;
     }
 
+    /** @return 西文字体名；未指定时为 {@code null} */
     public String name() { return name; }
+
+    /** @return 半磅单位的字号；未指定时为 {@code null} */
     public String size() { return size; }
+
+    /** @return 十六进制字体颜色；未指定时为 {@code null} */
     public String color() { return color; }
+
+    /** @return 东亚字体名；未指定时为 {@code null} */
     public String eastAsia() { return eastAsia; }
+
+    /** @return 复杂脚本字体名；未指定时为 {@code null} */
     public String cs() { return cs; }
 
     @Override

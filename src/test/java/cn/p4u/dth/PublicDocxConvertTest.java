@@ -16,8 +16,8 @@ public class PublicDocxConvertTest {
 
   public static void convertInputStreamToHtmlStrTest() throws Exception {
     String tmpDir = "E:\\_tmp\\word\\";
-    String docxPath = tmpDir + "公式手动设置样式和编辑器默认样式测.docx";
-    String htmlPath = tmpDir + "公式手动设置样式和编辑器默认样式测.html";
+    String docxPath = tmpDir + "word不同类别测试.docx";
+    String htmlPath = tmpDir + "word不同类别测试.html";
     FileInputStream fileInputStream = new FileInputStream(docxPath);
     String htmlContent =
         DocxConverter.convert(

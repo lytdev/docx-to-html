@@ -124,6 +124,11 @@ public final class DocumentParser {
     /**
      * 解析文档并同步报告正文顶层内容项的进度。
      * 段落和表格各计为一项，文档配置节点不参与统计。
+     *
+     * @param extractedDir DOCX 解压后的临时目录路径
+     * @param callback 解析进度回调；传入 {@code null} 表示不监听进度
+     * @return 解析完成的文档模型
+     * @throws DocxConversionException document.xml 不存在或解析失败时抛出
      */
     public static DocumentModel parse(Path extractedDir, FileParseCallback<ContentBlock> callback) {
         DocumentParser parser = new DocumentParser(extractedDir);
