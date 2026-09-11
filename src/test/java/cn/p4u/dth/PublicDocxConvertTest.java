@@ -7,15 +7,17 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import org.junit.jupiter.api.Test;
 
 public class PublicDocxConvertTest {
 
-  @Test
-  public void convertsInputStreamToHtmlStrTest() throws Exception {
+  public static void main(String[] args) throws Exception {
+    convertInputStreamToHtmlStrTest();
+  }
+
+  public static void convertInputStreamToHtmlStrTest() throws Exception {
     String tmpDir = "E:\\_tmp\\word\\";
-    String docxPath = tmpDir + "word不同类别测试.docx";
-    String htmlPath = tmpDir + "word不同类别测试.html";
+    String docxPath = tmpDir + "公式手动设置样式和编辑器默认样式测.docx";
+    String htmlPath = tmpDir + "公式手动设置样式和编辑器默认样式测.html";
     FileInputStream fileInputStream = new FileInputStream(docxPath);
     String htmlContent =
         DocxConverter.convert(
