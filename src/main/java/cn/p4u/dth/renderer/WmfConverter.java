@@ -5,14 +5,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
  * WMF/EMF 转 PNG 的统一入口（Facade 模式）。
  *
- * <p>这个类只做三件事：识别格式、管理临时文件、调用选中的转换策略。
- * ImageMagick 和 PowerShell 的命令细节分别放在独立策略类中，初学者可以沿着
- * WmfConverter → WmfRasterizerFactory → WmfRasterizer 的顺序阅读。</p>
+ * <p>这个类只做三件事：识别格式、管理临时文件、调用选中的转换策略。 ImageMagick 和 PowerShell 的命令细节分别放在独立策略类中，初学者可以沿着 WmfConverter
+ * → WmfRasterizerFactory → WmfRasterizer 的顺序阅读。
  */
 public final class WmfConverter {
   private static final Logger LOG = Logger.getLogger(WmfConverter.class.getName());
@@ -29,6 +29,7 @@ public final class WmfConverter {
 
   /**
    * 判断 MIME 类型是否表示 WMF 或 EMF。
+   *
    * @param mimeType 待判断的 MIME 类型
    * @return 是 WMF 或 EMF 时为 {@code true}
    */
@@ -38,6 +39,7 @@ public final class WmfConverter {
 
   /**
    * 判断路径扩展名是否为 .wmf 或 .emf，比较时忽略大小写。
+   *
    * @param path 待判断路径，可为 {@code null}
    * @return 扩展名匹配时为 {@code true}
    */
@@ -51,18 +53,19 @@ public final class WmfConverter {
 
   /**
    * 使用默认 AUTO 策略转换。保留该重载是为了兼容已有调用代码。
+   *
    * @param data WMF/EMF 原始数据
    * @param logicalWidth 目标逻辑宽度（像素）
    * @param logicalHeight 目标逻辑高度（像素）
    * @return PNG 数据；无法转换时为 {@code null}
    */
   public static byte[] convertToPng(byte[] data, int logicalWidth, int logicalHeight) {
-    return convertToPng(
-        data, logicalWidth, logicalHeight, WmfConversionStrategy.AUTO, null);
+    return convertToPng(data, logicalWidth, logicalHeight, WmfConversionStrategy.AUTO, null);
   }
 
   /**
    * 按 ConversionConfig 中的策略转换 WMF/EMF 数据。
+   *
    * @param data WMF/EMF 原始数据
    * @param logicalWidth 目标逻辑宽度（像素）
    * @param logicalHeight 目标逻辑高度（像素）
@@ -73,11 +76,7 @@ public final class WmfConverter {
       byte[] data, int logicalWidth, int logicalHeight, ConversionConfig config) {
     Objects.requireNonNull(config, "config");
     return convertToPng(
-        data,
-        logicalWidth,
-        logicalHeight,
-        config.wmfStrategy(),
-        config.imageMagickPath());
+        data, logicalWidth, logicalHeight, config.wmfStrategy(), config.imageMagickPath());
   }
 
   private static byte[] convertToPng(
@@ -99,8 +98,9 @@ public final class WmfConverter {
     Path target = null;
     try {
       // 外部程序通常只接受文件路径，因此在调用前把内存数据落到临时文件。
-      source = Files.createTempFile("wmf2png_", ".wmf");
-      target = Files.createTempFile("wmf2png_", ".png");
+      String uuid = UUID.randomUUID().toString();
+      source = Files.createTempFile("wmf2png_" + uuid + "_", ".wmf");
+      target = Files.createTempFile("wmf2png_" + uuid + "_", ".png");
       Files.write(source, data);
 
       if (rasterizer.rasterize(source, target, logicalWidth, logicalHeight)
