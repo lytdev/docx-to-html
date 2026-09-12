@@ -27,6 +27,57 @@ class LinuxWmfRasterizerTest {
   @TempDir Path temp;
 
   @Test
+  void rendersMathTypeFormulaWithDisjointTextAndContinuousChineseSubscripts() throws Exception {
+    byte[] bytes;
+    try (var resource = getClass().getResourceAsStream("mathtype-chinese-dx.wmf")) {
+      assertNotNull(resource);
+      bytes = resource.readAllBytes();
+    }
+    Path source = temp.resolve("formula.wmf");
+    Files.write(source, bytes);
+    assertTrue(LinuxWmfRasterizer.hasChineseFont(bytes));
+    assertTrue(drawnText(bytes).getFirst().endsWith("货货货货客客客客客"));
+    BufferedImage canvas = new BufferedImage(1784, 183, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D context = canvas.createGraphics();
+    try {
+      var state = LinuxWmfRasterizer.draw(
+          new HwmfPicture(new ByteArrayInputStream(bytes)), context, 1784, 183);
+      assertEquals(0x153 + 0x3a2 + 0x378 + 0x1bc, state.getProperties().getLocation().getX(), 0.001);
+      assertEquals(0x331, state.getProperties().getLocation().getY(), 0.001);
+    } finally {
+      context.dispose();
+    }
+    Path png = temp.resolve("formula.png");
+    assertEquals(Boolean.TRUE, LinuxWmfRasterizer.rasterizeChineseWmf(source, png, 446, 46));
+    assertArrayEquals(bytes, Files.readAllBytes(source));
+    BufferedImage preview = ImageIO.read(png.toFile());
+    assertNotNull(preview);
+    assertEquals(1784, preview.getWidth());
+    assertEquals(183, preview.getHeight());
+    assertTrue(inkIn(preview, 350, 110, 410, 150) > 50);
+    assertTrue(inkIn(preview, 860, 55, 920, 100) > 50);
+    String previewPath = System.getProperty("docx2html.test.formulaPreview");
+    if (previewPath == null) return;
+    BufferedImage white = new BufferedImage(preview.getWidth(), preview.getHeight(), BufferedImage.TYPE_INT_RGB);
+    Graphics2D graphics = white.createGraphics();
+    graphics.setColor(java.awt.Color.WHITE);
+    graphics.fillRect(0, 0, white.getWidth(), white.getHeight());
+    graphics.drawImage(preview, 0, 0, null);
+    graphics.dispose();
+    ImageIO.write(white, "png", Path.of(previewPath).toFile());
+  }
+
+  private static int inkIn(BufferedImage image, int left, int top, int right, int bottom) {
+    int count = 0;
+    for (int y = top; y < bottom; y++) {
+      for (int x = left; x < right; x++) {
+        if ((image.getRGB(x, y) >>> 24) > 64) count++;
+      }
+    }
+    return count;
+  }
+
+  @Test
   void windowsAndMacNeverUseLinuxCompatibility() {
     assertFalse(ImageMagickWmfRasterizer.useLinuxWmfRenderer("Windows 11"));
     assertFalse(ImageMagickWmfRasterizer.useLinuxWmfRenderer("Windows Server 2022"));
@@ -117,7 +168,7 @@ class LinuxWmfRasterizerTest {
     } finally {
       ctx.dispose();
     }
-    return captured;
+    return List.of(String.join("", captured));
   }
 
   private byte[] wmf(String text, String charset, int charsetId, boolean extended)

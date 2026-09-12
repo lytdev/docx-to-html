@@ -108,7 +108,7 @@ final class LinuxWmfRasterizer {
     throw new IOException("Missing WMF EOF");
   }
 
-  static void draw(HwmfPicture picture, Graphics2D ctx, int width, int height) {
+  static HwmfGraphics draw(HwmfPicture picture, Graphics2D ctx, int width, int height) {
     Rectangle2D bounds = picture.getInnnerBounds();
     if (bounds == null) bounds = picture.getBounds();
     if (bounds.isEmpty()) throw new IllegalArgumentException("Empty WMF bounds");
@@ -118,6 +118,7 @@ final class LinuxWmfRasterizer {
     graphics.getProperties().setViewportOrg(bounds.getX(), bounds.getY());
     graphics.getProperties().setViewportExt(bounds.getWidth(), bounds.getHeight());
     picture.getRecords().forEach(record -> record.draw(graphics));
+    return graphics;
   }
 
   /** POI 5.5.1 的 GB2312 映射较窄；Windows charset 134 应按 CP936/GBK 解码。 */
@@ -138,14 +139,59 @@ final class LinuxWmfRasterizer {
               .onUnmappableCharacter(CodingErrorAction.REPORT)
               .decode(ByteBuffer.wrap(text, 0, length)).toString();
           List<Integer> charDx = characterAdvances(decoded, cs, dx);
-          super.drawString(decoded.getBytes(StandardCharsets.UTF_16LE), decoded.length(),
+          drawPositionedText(decoded.getBytes(StandardCharsets.UTF_16LE), decoded.length(),
               reference, scale, clip, opts, charDx, true);
           return;
         } catch (IOException e) {
           throw new IllegalArgumentException("Invalid WMF " + cs.name() + " text", e);
         }
       }
-      super.drawString(text, length, reference, scale, clip, opts, dx, unicode);
+      drawPositionedText(text, length, reference, scale, clip, opts, dx, unicode);
+    }
+
+    private void drawPositionedText(byte[] text, int length, Point2D reference,
+        Dimension2D scale, Rectangle2D clip, WmfExtTextOutOptions opts,
+        List<Integer> advances, boolean unicode) {
+      if (advances == null || advances.isEmpty()) {
+        super.drawString(text, length, reference, scale, clip, opts, advances, unicode);
+        return;
+      }
+      int byteWidth = unicode ? 2 : 1;
+      if (advances.size() != length || text.length < length * byteWidth) {
+        throw new IllegalArgumentException("Invalid WMF character spacing");
+      }
+      Point2D location = reference.distance(0, 0) == 0
+          ? getProperties().getLocation() : reference;
+      double originX = location.getX();
+      double originY = location.getY();
+      double angle = Math.toRadians(-getProperties().getFont().getEscapement() / 10.0);
+      int totalAdvance = 0;
+      for (int value : advances) totalAdvance = Math.addExact(totalAdvance, value);
+      var alignment = getProperties().getTextAlignLatin();
+      double offset = switch (alignment) {
+        case RIGHT -> totalAdvance;
+        case CENTER -> totalAdvance / 2.0;
+        default -> 0;
+      };
+      originX -= offset * Math.cos(angle);
+      originY -= offset * Math.sin(angle);
+      int advance = 0;
+      getProperties().setTextAlignLatin(org.apache.poi.hwmf.record.HwmfText.HwmfTextAlignment.LEFT);
+      try {
+        for (int index = 0; index < length; index++) {
+          Point2D position = new Point2D.Double(originX + advance * Math.cos(angle),
+              originY + advance * Math.sin(angle));
+          getProperties().setLocation(position.getX(), position.getY());
+          byte[] character = java.util.Arrays.copyOfRange(text, index * byteWidth,
+              (index + 1) * byteWidth);
+          super.drawString(character, 1, position, scale, clip, opts, null, unicode);
+          advance = Math.addExact(advance, advances.get(index));
+        }
+      } finally {
+        getProperties().setTextAlignLatin(alignment);
+      }
+      getProperties().setLocation(originX + advance * Math.cos(angle),
+          originY + advance * Math.sin(angle));
     }
   }
 

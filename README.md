@@ -254,6 +254,8 @@ ConversionConfig config = ConversionConfig.builder()
 当 `AUTO` 选中 ImageMagick 或指定 `IMAGEMAGICK` 时，仅在 Linux 上检测 WMF 字体对象。
 含 `charset=134` 或 `136` 的 WMF 使用 `poi-scratchpad 5.5.1` 和 Java2D 渲染为透明 PNG，
 分别按 CP936/GBK、Big5 解码 `TextOut`/`ExtTextOut`。DBCS 的逐字节 Dx 间距合并为逐字符间距。
+带 Dx 的文本逐字符按逻辑坐标定位，并按全部 Dx 的总和更新绘图位置，支持 MathType 将分散的
+字母、运算符放在同一条记录及连续输出中文下标的公式，避免字体 tracking 近似导致错位。
 原 WMF 字节不会改写；Windows、EMF 和不含中文字符集的 WMF 继续使用原来的转换路径。
 这也意味着单独在命令行执行 `magick input.wmf output.png` 不会获得本项目的兼容处理。
 
